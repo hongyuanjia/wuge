@@ -15,6 +15,6 @@ test_that("wuge character data extraction works", {
 test_that("wuge calculation works", {
     expect_equal(
         names(get_wuge(c("王", "司马"), "一")),
-        c("xing", "ming", "sancai", "shuli", "base", "success", "social", "health")
+        c("score", "xing", "ming", "sancai", "shuli", "base", "success", "social", "health")
     )
 })

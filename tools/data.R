@@ -97,7 +97,7 @@ format_tbl_sancai <- function(file = here::here("tools/data/sancai.txt")) {
     )
 
     jixiong <- vapply(
-        str_extract_all(lines[i_end], "[^【】]"),
+        str_extract_all(lines[i_end], "(?<=【).+(?=】)", perl = TRUE),
         paste0, "", collapse = ""
     )
 
@@ -150,7 +150,7 @@ format_tbl_wuge <- function(file = here::here("tools/data/ImportShuli.php")) {
         num = num,
         brief = brief,
         desc = desc,
-        bad_or_good = bad_or_good,
+        jixiong = bad_or_good,
         foundation = foundation,
         family = family,
         health = health,

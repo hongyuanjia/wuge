@@ -162,8 +162,58 @@ get_wuge <- function(xing, ming, to_trad = TRUE) {
     data.table::set(health, NULL, c("wai", "zong"), NULL)
     data.table::setcolorder(health, "index")
 
+    # calculate scores
+    # ref: https://github.com/whmnoe4j/Calendar/blob/master/app/Services/NameTest.php
+    score_shuli <- data.table::data.table(
+        index = shuli$index,
+        wuge = shuli$wuge,
+        score = with(shuli,
+            data.table::fcase(
+                jixiong == "\u5927\u5409"            , 100,
+                jixiong == "\u5409"                  , 90,
+                jixiong == "\u534a\u5409"            , 80,
+                jixiong == "\u534a\u5409\u534a\u51f6", 60,
+                jixiong == "\u51f6"                  , 40,
+                jixiong == "\u5927\u51f6"            , 30
+            )
+        )
+    )
+    data.table::set(score_shuli, NULL, "score",
+        with(score_shuli,
+            data.table::fcase(
+                wuge == "tian", score * 0.05,
+                wuge == "di"  , score * 0.20,
+                wuge == "ren" , score * 0.50,
+                wuge == "wai" , score * 0.05,
+                wuge == "zong", score * 0.20
+            )
+        )
+    )
+    data.table::set(score_shuli, NULL, "wuge", NULL)
+    score_shuli <- score_shuli[, lapply(.SD, sum), by = "index"]
+
+    score_sancai <- data.table::data.table(
+        index = sancai$index,
+        score = with(sancai,
+            data.table::fcase(
+                jixiong == "\u5927\u5409"            , 100,
+                jixiong == "\u5409"                  , 95,
+                jixiong == "\u4e2d\u5409"            , 85,
+                jixiong == "\u5409\u591a\u4e8e\u51f6", 75,
+                jixiong == "\u559c\u51f6\u53c2\u534a", 60,
+                jixiong == "\u51f6\u591a\u4e8e\u5409", 45,
+                jixiong == "\u5927\u51f6"            , 30
+            )
+        )
+    )
+
+    data.table::set(score_shuli, NULL, "score",
+        round(score_shuli$score * 0.75 + score_sancai$score * 0.25, 1L)
+    )
+
     structure(
         list(
+            score = score_shuli,
             xing = dt_xing,
             ming = dt_ming,
             sancai = sancai,
