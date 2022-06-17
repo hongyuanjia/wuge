@@ -1,0 +1,22 @@
+Package: wuge
+Type: Package
+Title: Construct Chinese names based on 'WuGe' rules
+Version: 0.0.1
+Authors@R: c(
+    person(given = "Hongyuan",
+           family = "Jia",
+           role = c("aut", "cre"),
+           email = "hongyuanjia@cqust.edu.cn",
+           comment = c(ORCID = "0000-0002-0075-8183"))
+    )
+Description:
+    Provide utilities to construct Chinese names and evaluate them based on
+    'WuGe' rules.
+License: MIT + file LICENSE
+Encoding: UTF-8
+RoxygenNote: 7.2.0
+Imports:
+    data.table
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
