@@ -86,6 +86,7 @@ format_tbl_conv <- function(file = here::here("tools/data/STCharacters.txt")) {
 
 format_tbl_sancai <- function(file = here::here("tools/data/sancai.txt")) {
     lines <- data.table::fread(file, sep = NULL, header = FALSE)$V1
+    grep("^[金木水火土]", lines, value = TRUE)
     i_start <- which(grepl("^[金木水火土]{3}\\s*[0-9]{3}[^0-9]*[0-9]{3}", lines))
     i_end <- which(grepl("【.+】", lines))
 
@@ -109,13 +110,29 @@ format_tbl_sancai <- function(file = here::here("tools/data/sancai.txt")) {
         i_start, i_end
     ))
 
-    data.table::data.table(
+    sancai <- data.table::data.table(
         wuxing = wuxing,
         mod1 = vapply(mod, `[`, "", 1L),
         mod2 = vapply(mod, `[`, "", 2L),
-        jixiong = jixiong,
+        jixiong = gsub("凶多于吉", "凶多吉少", jixiong, fixed = TRUE),
         description = desc
     )
+
+    data.table::set(sancai, NULL, "score",
+        with(sancai,
+            data.table::fcase(
+                jixiong == "大吉",     100L,
+                jixiong == "吉",       95L,
+                jixiong == "中吉",     85L,
+                jixiong == "吉多于凶", 75L,
+                jixiong == "吉凶参半", 60L,
+                jixiong == "凶多吉少", 45L,
+                jixiong == "大凶",     30L
+            )
+        )
+    )
+
+    sancai
 }
 
 format_tbl_wuge <- function(file = here::here("tools/data/ImportShuli.php")) {
@@ -158,6 +175,21 @@ format_tbl_wuge <- function(file = here::here("tools/data/ImportShuli.php")) {
         fortune = fortune,
         desc_full = full
     )
+
+    data.table::set(num_fortune, NULL, "score",
+        with(num_fortune,
+            data.table::fcase(
+                jixiong == "大吉",     100L,
+                jixiong == "吉",       90L,
+                jixiong == "半吉",     80L,
+                jixiong == "半吉半凶", 60L,
+                jixiong == "凶",       40L,
+                jixiong == "大凶",     30L
+            )
+        )
+    )
+
+    num_fortune
 }
 
 format_tbl_char <- function(file = here::here("tools/data/char_base.json")) {
@@ -211,7 +243,7 @@ format_tbl_career <- function(file = here::here("tools/data/career.csv")) {
 
 format_tbl_social <- function(file = here::here("tools/data/social.csv")) {
     dt <- data.table::fread(file)
-    data.table::setnames(dt, c("ren", "wai", "jixong", "description"))
+    data.table::setnames(dt, c("ren", "wai", "jixiong", "description"))
     dt
 }
 

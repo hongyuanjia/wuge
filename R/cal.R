@@ -1,48 +1,76 @@
+#' Calculate WuGe values based on strokes
+#'
+#' @param stroke_xing An integer vector of WuGe strokes for the family names.
+#'
+#' @param stroke_ming An integer vector of WuGe strokes for the given names.
+#'
+#' @param len_xing An integer indicating the input number of family names.
+#'
+#' @param len_ming An integer indicating the input number of given names
+#'
+#' @noRd
+get_wuge_val <- function(stroke_xing, stroke_ming, len_xing = length(stroke_xing), len_ming = length(stroke_ming)) {
+    sx <- psum(stroke_xing)
+    sm <- psum(stroke_ming)
+
+    # Tian
+    tian <- if (len_xing == 1L) .subset2(stroke_xing, 1L) + 1L else sx
+
+    # Ren
+    ren <- .subset2(stroke_xing, len_xing) + .subset2(stroke_ming, 1L)
+
+    # Di
+    di <- if (len_ming == 1L) .subset2(stroke_ming, 1L) + 1L else sm
+
+    # Zong
+    zong <- sx + sm
+
+    # Wai
+    wai <- tian + di - ren
+
+    list(
+        tian = tian, ren = ren, di = di, wai = wai, zong = zong
+    )
+}
+
 get_wuge_char_data <- function(char, to_trad = TRUE) {
-    match <- get_char_data(char)
-    if (to_trad) {
-        data.table::set(match, NULL, "traditional", sim2trad(match$character))
-    } else {
-        data.table::set(match, NULL, "traditional", match$character)
-    }
+    match <- split_char(char)
 
     # NOTE: right join is much faster than join and modify in place using `:=`
-    match <- dict_kangxi()[, .SD, .SDcols = c("character", "stroke")][
-        match, on = c("character" = "traditional")]
-    data.table::setnames(match,
-        c("i.stroke", "stroke", "character", "i.character"),
-        c("stroke", "stroke_wuge", "traditional", "character")
-    )
+    if (!to_trad) {
+        # treat input as traditional characters
+        match <- dict_fullchar()[match, on = c("traditional" = "character")]
+
+        # if any characters are not matched, retry with simplified characters
+        if (length(miss <- which(is.na(match$stroke)))) {
+            data.table::set(
+                match, miss,
+                c("character", "stroke", "pinyin", "radical", "stroke_wuge"),
+                dict_fullchar()[
+                    J(match$traditional[miss]), on = "character", .SD,
+                    # NOTE: here use the strokes for simplified characters
+                    .SDcols = c("character", "stroke", "pinyin", "radical", "stroke")
+                ]
+            )
+        }
+    } else {
+        match <- dict_fullchar()[match, on = "character"]
+    }
 
     # no need to include radical
     data.table::set(match, NULL, "radical", NULL)
 
-    fixed <- data.table::data.table(
-        character = c(
-            "\u4e00", "\u4e8c", "\u4e09", "\u56db", "\u4e94",
-            "\u516d", "\u4e03", "\u516b", "\u4e5d", "\u5341"
-        ),
-        stroke = 1:10
-    )
-
-    # NOTE: make CRAN check happy
-    i.stroke <- stroke_wuge <- NULL
-
-    match[fixed, on = "character", stroke_wuge := i.stroke]
-
+    # only use the first pinyin
     data.table::set(match, NULL, "pinyin", gsub("\\|.+$", "", match$pinyin))
 
     data.table::setcolorder(match, c("index", "character", "stroke", "pinyin"))
-    data.table::setcolorder(match, c(setdiff(names(match), "stroke_wuge")))
 
     match
 }
 
 #' Get WuGe information of Chinese names
 #'
-#' `sim2tra()` uses the dictionary `STCharacter.txt` distributed via
-#' [`OpenCC`](https://opencc.byvoid.com/) to convert Simplified Chinese to
-#' Traditional Chinese.
+#' `get_wuge()` gets the WuGe information of Chinese names.
 #'
 #' @param xing A character vector of Chinese characters indicating the last
 #'        names.
@@ -63,9 +91,9 @@ get_wuge_char_data <- function(char, to_trad = TRUE) {
 get_wuge <- function(xing, ming, to_trad = TRUE) {
     if (length(xing) != length(ming)) {
         if (length(xing) == 1L) {
-            last <- rep(xing, length(ming))
+            xing <- rep(xing, length(ming))
         } else if (length(ming) == 1L) {
-            first <- rep(ming, length(xing))
+            ming <- rep(ming, length(xing))
         } else {
             stop(sprintf(
                 "`xing` and `ming` should have the same length. But `length(last)` = %i while `length(first)` = %i.",
@@ -77,157 +105,31 @@ get_wuge <- function(xing, ming, to_trad = TRUE) {
     dt_xing <- get_wuge_char_data(xing, to_trad = to_trad)
     dt_ming <- get_wuge_char_data(ming, to_trad = to_trad)
 
-    # calculate wuge
-    wuge <- dt_xing[, by = "index", list(
-        tian = c(stroke_wuge[1L] + 1L, sum(stroke_wuge))[c(.N == 1L, .N != 1L)]
-    )]
-    ## Ren
-    data.table::set(
-        wuge, NULL, "ren",
-        dt_xing[, by = "index", .SD[.N], .SDcols = "stroke_wuge"]$stroke_wuge +
-            dt_ming[, by = "index", .SD[1L], .SDcols = "stroke_wuge"]$stroke_wuge
-    )
-    ## Di
-    # NOTE: to make CRAN checks happy
-    stroke_wuge <- .N <- NULL
-    data.table::set(
-        wuge, NULL, "di",
-        dt_ming[, by = "index", {
-            c(stroke_wuge[.N] + 1L, sum(stroke_wuge))[c(.N == 1L, .N != 1L)]
-        }]$V1
-    )
-    ## Zong
-    data.table::set(
-        wuge, NULL, "zong",
-        dt_xing[, by = "index", sum(stroke_wuge)]$V1 +
-            dt_ming[, by = "index", sum(stroke_wuge)]$V1
-    )
-    ## Wai
-    data.table::set(wuge, NULL, "wai", wuge$tian + wuge$di - wuge$ren)
-    data.table::setcolorder(wuge, setdiff(names(wuge), "zong"))
+    num_xing <- split.default(dt_xing$stroke_wuge, dt_xing$index)
+    num_ming <- split.default(dt_ming$stroke_wuge, dt_ming$index)
+    len_xing <- lengths(num_xing, use.names = FALSE)
+    len_ming <- lengths(num_ming, use.names = FALSE)
 
-    # get shuli
-    shuli <- data.table::melt.data.table(wuge,
-        id.vars = "index", variable.factor = FALSE,
-        variable.name = "wuge", value.name = "num"
+    wuge <- data.table::rbindlist(
+        Map(get_wuge_val, num_xing, num_ming, len_xing, len_ming),
+        idcol = "index"
     )
-    data.table::set(shuli, NULL, "wuxing", get_wuxing(shuli$num))
-    data.table::setorderv(shuli, "index")
-
-    # get sancai
-    sancai <- data.table::data.table(
-        index = wuge$index,
-        wuxing = shuli[, by = "index", str_join(wuxing[1:3])]$V1
-    )
-    sancai <- dict_sancai()[, .SD, .SDcols = c("wuxing", "jixiong", "description")][
-        sancai, on = "wuxing"
-    ]
-    data.table::setcolorder(sancai, c("index", "wuxing"))
-
-    # get special sancai
-    sancai <- dict_special_sancai()[sancai, on = "wuxing"]
-    data.table::setnames(sancai,
-        c("i.description", "description"),
-        c("description", "description_special")
-    )
-    data.table::setcolorder(sancai, c("index", "wuxing", "jixiong", "description"))
-
-    shuli <- dict_shuli()[shuli, on = "num"]
-    data.table::setcolorder(shuli, c("index", "wuge", "wuxing", "num"))
-
-    # get wuge in wuxing style
-    wuxing <- data.table::as.data.table(
-        c(list(index = wuge$index), lapply(wuge[, -1L], get_wuxing))
-    )
-    # get wuge in mode style
-    wuge_mod <- data.table::as.data.table(
-        c(list(index = wuge$index), lapply(wuge[, -1L], `%%`, 10L))
-    )
-
-    # get luck
-    ## Base
-    base <- dict_luck_base()[wuxing, on = c("ren", "di")]
-    data.table::set(base, NULL, c("tian", "wai", "zong"), NULL)
-    data.table::setcolorder(base, "index")
-    ## Success
-    success <- dict_luck_success()[wuxing, on = c("ren", "tian")]
-    data.table::set(success, NULL, c("di", "wai", "zong"), NULL)
-    data.table::setcolorder(success, "index")
-    ## Social
-    social <- dict_luck_social()[wuge_mod, on = c("ren", "wai")]
-    data.table::set(social, NULL, c("tian", "di", "zong"), NULL)
-    data.table::setcolorder(social, "index")
-    ## Health
-    health <- dict_luck_health()[wuge_mod, on = c("tian", "ren", "di")]
-    data.table::set(health, NULL, c("wai", "zong"), NULL)
-    data.table::setcolorder(health, "index")
-
-    # calculate scores
-    # ref: https://github.com/whmnoe4j/Calendar/blob/master/app/Services/NameTest.php
-    score_shuli <- data.table::data.table(
-        index = shuli$index,
-        wuge = shuli$wuge,
-        score = with(shuli,
-            data.table::fcase(
-                jixiong == "\u5927\u5409"            , 100,
-                jixiong == "\u5409"                  , 90,
-                jixiong == "\u534a\u5409"            , 80,
-                jixiong == "\u534a\u5409\u534a\u51f6", 60,
-                jixiong == "\u51f6"                  , 40,
-                jixiong == "\u5927\u51f6"            , 30
-            )
-        )
-    )
-    data.table::set(score_shuli, NULL, "score",
-        with(score_shuli,
-            data.table::fcase(
-                wuge == "tian", score * 0.05,
-                wuge == "di"  , score * 0.20,
-                wuge == "ren" , score * 0.50,
-                wuge == "wai" , score * 0.05,
-                wuge == "zong", score * 0.20
-            )
-        )
-    )
-    data.table::set(score_shuli, NULL, "wuge", NULL)
-    score_shuli <- score_shuli[, lapply(.SD, sum), by = "index"]
-
-    score_sancai <- data.table::data.table(
-        index = sancai$index,
-        score = with(sancai,
-            data.table::fcase(
-                jixiong == "\u5927\u5409"            , 100,
-                jixiong == "\u5409"                  , 95,
-                jixiong == "\u4e2d\u5409"            , 85,
-                jixiong == "\u5409\u591a\u4e8e\u51f6", 75,
-                jixiong == "\u559c\u51f6\u53c2\u534a", 60,
-                jixiong == "\u51f6\u591a\u4e8e\u5409", 45,
-                jixiong == "\u5927\u51f6"            , 30
-            )
-        )
-    )
-
-    data.table::set(score_shuli, NULL, "score",
-        round(score_shuli$score * 0.75 + score_sancai$score * 0.25, 1L)
-    )
+    data.table::set(wuge, NULL, "index", as.integer(wuge$index))
 
     structure(
         list(
-            score = score_shuli,
             xing = dt_xing,
             ming = dt_ming,
-            sancai = sancai,
-            shuli = shuli,
-            base = base,
-            success = success,
-            social = social,
-            health = health
+            score = get_wuge_score(wuge),
+            sancai = get_wuge_sancai(wuge),
+            shuli = get_wuge_shuli(wuge),
+            luck = get_wuge_luck(wuge)
         ),
         class = "WuGe"
     )
 }
 
-get_wuxing <- function(stroke) {
+get_stroke_wuxing <- function(stroke) {
     mod <- stroke %% 10L
     data.table::fcase(
         mod == 1L | mod == 2L, "\u6728",
@@ -236,4 +138,165 @@ get_wuxing <- function(stroke) {
         mod == 7L | mod == 8L, "\u91d1",
         mod == 9L | mod == 0L, "\u6c34"
     )
+}
+
+get_wuge_shuli <- function(wuge) {
+    if (!"index" %in% names(wuge)) {
+        data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
+    }
+
+    shuli <- data.table::melt.data.table(wuge,
+        id.vars = "index", variable.factor = FALSE,
+        variable.name = "wuge", value.name = "num"
+    )
+    data.table::set(shuli, NULL, "wuxing", get_stroke_wuxing(shuli$num))
+    data.table::set(shuli, NULL,
+        c("score", "brief", "desc", "jixiong", "foundation", "family", "health", "future",
+            "fortune", "desc_full"),
+        with(dict_shuli(),
+            {
+                ind <- shuli$num
+                list(
+                    .subset(score, ind),
+                    .subset(brief, ind),
+                    .subset(desc, ind),
+                    .subset(jixiong, ind),
+                    .subset(foundation, ind),
+                    .subset(family, ind),
+                    .subset(health, ind),
+                    .subset(future, ind),
+                    .subset(fortune, ind),
+                    .subset(desc_full, ind)
+                )
+            }
+        )
+    )
+    data.table::setorderv(shuli, "index")
+}
+
+get_wuge_sancai <- function(wuge) {
+    if (!"index" %in% names(wuge)) {
+        data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
+    }
+
+    sancai <- data.table::data.table(
+        index = wuge$index,
+        wuxing = with(
+            wuge,
+            paste0(get_stroke_wuxing(tian), get_stroke_wuxing(ren), get_stroke_wuxing(di))
+        )
+    )
+    data.table::set(sancai, NULL, c("jixiong", "score", "description"),
+        {
+            dsancai <- dict_sancai()
+            ind <- data.table::chmatch(sancai$wuxing, dsancai$wuxing)
+            list(dsancai$jixiong[ind], dsancai$score[ind], dsancai$description[ind])
+        }
+    )
+
+    # get special sancai
+    data.table::set(sancai, NULL, "description_special",
+        {
+            dsancai <- dict_special_sancai()
+            ind <- data.table::chmatch(sancai$wuxing, dsancai$wuxing)
+            dsancai$description[ind]
+        }
+    )
+
+    sancai
+}
+
+get_wuge_luck <- function(wuge) {
+    if (!"index" %in% names(wuge)) {
+        data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
+    }
+
+    # get wuge in wuxing style
+    wuxing <- data.table::as.data.table(
+        c(list(index = wuge$index),
+            lapply(
+                .subset(wuge, c("tian", "ren", "di", "wai", "zong")),
+                get_stroke_wuxing
+            )
+        )
+    )
+    # get wuge in mode style
+    wuge_mod <- data.table::as.data.table(
+        c(list(index = wuge$index),
+            lapply(
+                .subset(wuge, c("tian", "ren", "di", "wai", "zong")),
+                `%%`, 10L
+            )
+        )
+    )
+
+    # Base
+    base <- dict_luck_base()[wuxing, on = c("ren", "di")]
+    data.table::set(base, NULL, c("tian", "wai", "zong"), NULL)
+    data.table::setcolorder(base, "index")
+
+    # Success
+    success <- dict_luck_success()[wuxing, on = c("ren", "tian")]
+    data.table::set(success, NULL, c("di", "wai", "zong"), NULL)
+    data.table::setcolorder(success, "index")
+
+    # Social
+    social <- dict_luck_social()[wuge_mod, on = c("ren", "wai")]
+    data.table::set(social, NULL, c("tian", "di", "zong"), NULL)
+    data.table::setcolorder(social, "index")
+
+    # Health
+    health <- dict_luck_health()[wuge_mod, on = c("tian", "ren", "di")]
+    data.table::set(health, NULL, c("wai", "zong"), NULL)
+    data.table::setcolorder(health, "index")
+
+    list(base = base, success = success, social = social, health = health)
+}
+
+get_wuge_score <- function(wuge) {
+    score <- data.table::copy(wuge)
+
+    if (!"index" %in% names(score)) {
+        data.table::set(score, NULL, "index", seq_len(nrow(score)))
+    }
+
+    # ref: https://github.com/whmnoe4j/Calendar/blob/master/app/Services/NameTest.php
+    data.table::set(score, NULL, "sancai",
+        with(score, paste0(get_stroke_wuxing(tian), get_stroke_wuxing(ren), get_stroke_wuxing(di)))
+    )
+    data.table::set(score, NULL,
+        c("score_tian", "score_ren", "score_di", "score_wai", "score_zong"),
+        {
+            all_scores <- dict_shuli()$score
+            with(score,
+                list(
+                    all_scores[tian],
+                    all_scores[ren],
+                    all_scores[di],
+                    all_scores[wai],
+                    all_scores[zong]
+                )
+            )
+        }
+    )
+    data.table::set(score, NULL, "score_wuge",
+        with(score,
+             score_tian * 0.05 + score_di * 0.20 + score_ren * 0.50 +
+             score_wai * 0.05 + score_zong * 0.20
+        )
+    )
+    data.table::set(score, NULL, "score_sancai",
+        with(score, {
+            all_sancai <- dict_sancai()
+            all_sancai$score[data.table::chmatch(sancai, all_sancai$wuxing)]
+        })
+    )
+    data.table::set(score, NULL, "score_total",
+        round(score$score_wuge * 0.75 + score$score_sancai * 0.25, 1L)
+    )
+
+    data.table::setcolorder(score,
+        c("index", "tian", "ren", "di", "wai", "zong", "sancai")
+    )
+    score
 }

@@ -17,6 +17,7 @@ NULL
 BBN_ENV <- new.env(parent = emptyenv())
 BBN_ENV$conv <- NULL
 BBN_ENV$char <- NULL
+BBN_ENV$fullchar <- NULL
 BBN_ENV$kangxi <- NULL
 BBN_ENV$sancai <- NULL
 BBN_ENV$special_sancai <- NULL
@@ -62,6 +63,42 @@ dict_kangxi <- function(force = FALSE) {
     }
 
     BBN_ENV$kangxi
+}
+
+dict_fullchar <- function(force = FALSE) {
+    if (is.null(BBN_ENV$fullchar)) force <- TRUE
+
+    if (force) {
+        fullchar <- data.table::copy(dict_char())
+        fullchar[dict_conv(),
+            on = c("character" = "simplified"),
+            traditional := substring(i.traditional, 1L, 1L)
+        ]
+        fullchar[is.na(traditional), traditional := character]
+        fullchar[dict_kangxi(),
+            on = c("traditional" = "character"),
+            stroke_wuge := i.stroke
+        ]
+        fullchar[is.na(stroke_wuge), stroke_wuge := stroke]
+
+        fixed <- data.table::data.table(
+            character = c(
+                "\u4e00", "\u4e8c", "\u4e09", "\u56db", "\u4e94",
+                "\u516d", "\u4e03", "\u516b", "\u4e5d", "\u5341"
+                ),
+            stroke = 1:10
+        )
+
+        fullchar[fixed, on = "character", stroke_wuge := i.stroke]
+        data.table::setindexv(fullchar, "character")
+        data.table::setindexv(fullchar, "traditional")
+        data.table::setindexv(fullchar, "stroke")
+        data.table::setindexv(fullchar, "stroke_wuge")
+
+        BBN_ENV$fullchar <- fullchar
+    }
+
+    BBN_ENV$fullchar
 }
 
 dict_sancai <- function(force = FALSE) {
