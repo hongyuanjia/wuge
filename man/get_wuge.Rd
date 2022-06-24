@@ -20,9 +20,7 @@ directly specify Tradition Chinese characters as input. Default:
 `TRUE`}
 }
 \description{
-`sim2tra()` uses the dictionary `STCharacter.txt` distributed via
-[`OpenCC`](https://opencc.byvoid.com/) to convert Simplified Chinese to
-Traditional Chinese.
+`get_wuge()` gets the WuGe information of Chinese names.
 }
 \examples{
 get_wuge(c("张", "李"), c("三", "四五"))
