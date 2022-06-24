@@ -6,7 +6,7 @@ str_extract_all <- function(x, pattern, ...) {
     regmatches(x, gregexpr(pattern, x, ...))
 }
 
-download_file <- function(file, dir, repo, new_name = file) {
+download_file <- function(file, dir, repo, new_name = file, branch = "master") {
     dest <- here::here(glue::glue("tools/data/{new_name}"))
     if (!file.exists(dest)) {
         message(glue::glue("Downloading file '{file}'..."))
@@ -21,7 +21,7 @@ download_file <- function(file, dir, repo, new_name = file) {
             path <- paste(dir, file, sep = "/")
         }
 
-        url <- glue::glue("https://raw.githubusercontent.com/{repo}/master/{path}")
+        url <- glue::glue("https://raw.githubusercontent.com/{repo}/{branch}/{path}")
         if (download.file(url, dest, mode = "wb")) {
             stop(glue::glue("Failed to download '{file}'..."))
         }
@@ -30,17 +30,16 @@ download_file <- function(file, dir, repo, new_name = file) {
     dest
 }
 
-check_sha <- function(file, dir, repo) {
+default_branch <- function(repo) {
+    # get default branch
+    gh::gh(glue::glue("/repos/{repo}"))$default_branch
+}
+
+check_sha <- function(file, dir, repo, branch = "master") {
     message(glue::glue("Retrieving GitHub SHA1 for '{file}'..."))
-    endpoint <- glue::glue(
-        "/repos/{repo}/git/trees/master",
-        repo = gsub('-', '%2D', repo, fixed = TRUE)
-    )
+    endpoint <- glue::glue("/repos/{repo}/git/trees/{branch}")
     if (!is.null(dir)) {
-        endpoint <- glue::glue(
-            "{endpoint}:{dir}",
-            dir = gsub("-", "%2D", dir, fixed = TRUE)
-        )
+        endpoint <- glue::glue("{endpoint}:{dir}")
     }
 
     gh <- gh::gh(endpoint)
@@ -67,10 +66,11 @@ check_sha <- function(file, dir, repo) {
 }
 
 init_file <- function(dict, dir, repo, new_name = dict, log = TRUE) {
-    f <- download_file(dict, dir, repo, new_name = new_name)
+    branch <- default_branch(repo)
+    f <- download_file(dict, dir, repo, new_name, branch)
 
-    if (log && !check_sha(dict, dir, repo)) {
-        f <- download_file(dict, dir, repo, new_name = new_name)
+    if (log && !check_sha(dict, dir, repo, branch)) {
+        f <- download_file(dict, dir, repo, new_name, branch)
     }
     f
 }
@@ -202,7 +202,8 @@ format_tbl_char <- function(file = here::here("tools/data/char_base.json")) {
     )
 }
 
-format_tbl_kangxi <- function(file = here::here("tools/data/kangxi.csv")) {
+format_tbl_kangxi <- function(file = here::here("tools/data/kangxi.csv"),
+                              wuxing = here::here("tools/data/kangxi_wuxing.csv")) {
     dt <- data.table::fread(file)
     data.table::set(dt, NULL, "character",
         intToUtf8(strtoi(dt$codepoint, 10L), multiple = TRUE)
@@ -213,6 +214,9 @@ format_tbl_kangxi <- function(file = here::here("tools/data/kangxi.csv")) {
     data.table::set(dt, NULL, c("codepoint", "radical_codepoint"), NULL)
     data.table::setnames(dt, c("strokes", "radical_strokes"), c("stroke", "radical_stroke"))
     data.table::setcolorder(dt, c("character", "stroke", "radical", "radical_stroke"))
+
+    wuxing <- data.table::fread(wuxing)
+    dt[wuxing, on = c("character" = "hanzi"), wuxing := i.wuxing]
     dt
 }
 
@@ -305,12 +309,18 @@ init_file("ImportShuli.php", "app/Console/Commands", "whmnoe4j/Calendar") |>
     format_tbl_wuge() |>
     data.table::fwrite(here::here("inst/extdata/shuli.csv"))
 
-init_file("char_base.json", "data/character", "mapull/chinese-dictionary", log = FALSE) |>
+init_file("char_base.json", "data/character", "mapull/chinese-dictionary") |>
     format_tbl_char() |>
     data.table::fwrite(here::here("inst/extdata/char.csv"))
 
-init_file("kangxi.csv", "vendor/data", "fh250250/fortune", log = FALSE) |>
+init_file("kangxi.csv", "vendor/data", "fh250250/fortune") |>
     format_tbl_kangxi() |>
+    data.table::fwrite(here::here("inst/extdata/kangxi.csv"))
+
+format_tbl_kangxi(
+    init_file("kangxi.csv", "vendor/data", "fh250250/fortune"),
+    init_file("wuxing.csv", "data", "sinshine/AI-name", "kangxi_wuxing.csv")
+    ) |>
     data.table::fwrite(here::here("inst/extdata/kangxi.csv"))
 
 format_tbl_special_sancai() %>%
