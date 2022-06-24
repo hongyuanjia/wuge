@@ -1,4 +1,21 @@
 test_that("new name calculation works", {
+    expect_error(
+        cal_strokes(c("王", "司马"), num_char = 0)
+    )
+
+    expect_error(
+        cal_strokes(c("王", "司马"), fixed_stroke = -1)
+    )
+
+    expect_error(
+        cal_strokes(c("王", "司马"), fixed_stroke = 0)
+    )
+
+    expect_equal(
+        names(cal_strokes(c("王", "司马"), max_stroke = 30, min_stroke = 3, fixed_stroke = c(0, 4))),
+        c("xing", "ming_strokes")
+    )
+
     expect_equal(
         names(cal_strokes(c("王", "司马"), max_stroke = 30)),
         c("xing", "ming_strokes")

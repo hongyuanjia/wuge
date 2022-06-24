@@ -1,3 +1,22 @@
+SCORE_WUGE <- c(
+    "\u5927\u5409"             = 100L,
+    "\u5409"                   = 90L,
+    "\u534a\u5409"             = 80L,
+    "\u534a\u5409\u534a\u51f6" = 60L,
+    "\u51f6"                   = 40L,
+    "\u5927\u51f6"             = 30L
+)
+
+SCORE_SANCAI <- c(
+    "\u5927\u5409"             = 100L,
+    "\u5409"                   = 95L,
+    "\u4e2d\u5409"             = 85L,
+    "\u5409\u591a\u4e8e\u51f6" = 75L,
+    "\u5409\u51f6\u53c2\u534a" = 60L,
+    "\u51f6\u591a\u5409\u5c11" = 45L,
+    "\u5927\u51f6"             = 30L
+)
+
 get_avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
     if (is.null(min_stroke)) {
         min_stroke <- 1L
@@ -22,21 +41,66 @@ get_avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
     ])
 }
 
+#' Calculate character stroke combinations that meet specified requirements
+#'
+#' @param xing A character vector of Chinese characters indicating the last
+#'        names.
+#'
+#' @param num_char An integer indicating number of characters in the given
+#'        names. Default: `2L`.
+#'
+#' @param min_stroke,max_stroke An integer indicating the minimum and maximum
+#'        stroke numbers in the given names. `NULL` means no restrictions.
+#'        Default: `NULL`.
+#'
+#' @param fixed_stroke An integer vector that has a length of `num_char`
+#'        indicating the fixed stroke number in the given names. `0` means do
+#'        not fix. E.g. if `num_char` is `2L`, `c(0, 10)` means that the second
+#'        character in the given names should has a stroke number of `10`, while
+#'        there is no fixed stroke number for the first character. Default:
+#'        `NULL`.
+#'
+#' @param min_wuge,max_sancai A string indicating the minimum luck for WuGe and
+#'        SanCai. Default: `\u5409`.
+#'
+#' @noRd
 cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NULL,
-                        allow_general = FALSE) {
-    assert_flag(allow_general)
-
-    dt_xing <- get_wuge_char_data(xing)
-
-    # subset Simplified Chinese strokes
-    wuge_strokes <- get_avail_strokes(min_stroke, max_stroke)
-
+                        fixed_stroke = NULL, min_wuge = "\u5409", min_sancai = min_wuge) {
     num_char <- assert_count(num_char, 1L)
     if (num_char >= 4L) {
-        stop(sprintf("`n_char` should be less than 4L but input is '%s'.", num_char))
+        stop(sprintf("`num_char` should be less than 4L but input is '%s'.", num_char))
     }
 
-    dt_ming <- do.call(data.table::CJ, replicate(num_char, list(wuge_strokes)))
+    if (is.null(fixed_stroke)) {
+        # subset Simplified Chinese strokes
+        strokes <- replicate(num_char, list(get_avail_strokes(min_stroke, max_stroke)))
+    } else {
+        if (!is.numeric(fixed_stroke) || !length(fixed_stroke)) {
+            stop("`fixed_stroke` should be an integer vector.")
+        }
+
+        fixed_stroke[is.na(fixed_stroke)] <- 0
+        if (any(fixed_stroke < 0 | fixed_stroke != trunc(fixed_stroke))) {
+            stop("`fixed_stroke` should be an non-negative integer vector.")
+        }
+
+        if (length(fixed_stroke) != num_char) {
+            stop(sprintf(
+                "`fixed_stroke` should have a length that equals to `num_char` (%i) but `%i` is found.",
+                num_char, length(fixed_stroke)
+            ))
+        }
+
+        fixed_stroke <- as.integer(fixed_stroke)
+
+        strokes <- as.list(fixed_stroke)
+        if (any(free <- fixed_stroke == 0L)) {
+            strokes[free] <- list(get_avail_strokes(min_stroke, max_stroke))
+        }
+    }
+    dt_ming <- do.call(data.table::CJ, strokes)
+
+    dt_xing <- get_wuge_char_data(xing)
 
     # calculate wuge for all possible combinations
     wuge <- data.table::rbindlist(
@@ -74,14 +138,17 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         })
     )
 
+    assert_choice(min_wuge, names(SCORE_WUGE))
+    assert_choice(min_sancai, names(SCORE_SANCAI))
+
     # only select entries that exceeds the threshold
-    thld_wuge <- if (allow_general) 60L else 80L
+    thld_wuge <- SCORE_WUGE[data.table::chmatch(min_wuge, names(SCORE_WUGE))]
     wuge_sel <- wuge[
         with(wuge,
-            score_ren >= thld_wuge &
-                score_di >= thld_wuge &
-                score_wai >= thld_wuge &
-                score_zong >= thld_wuge
+            score_ren  >= thld_wuge &
+            score_di   >= thld_wuge &
+            score_wai  >= thld_wuge &
+            score_zong >= thld_wuge
         )
     ]
 
@@ -104,7 +171,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         }
     )
 
-    thld_sancai <- if (allow_general) 60L else 75L
+    thld_sancai <- SCORE_SANCAI[data.table::chmatch(min_sancai, names(SCORE_SANCAI))]
     # NOTE: to make CRAN checks happy
     score_sancai <- NULL
     wuge_sancai_sel <- wuge_sel[score_sancai >= thld_sancai]
