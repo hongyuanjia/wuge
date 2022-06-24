@@ -69,6 +69,9 @@ dict_fullchar <- function(force = FALSE) {
     if (is.null(BBN_ENV$fullchar)) force <- TRUE
 
     if (force) {
+        # NOTE: to make CRAN checks happy
+        traditional <- i.traditional <- stroke_wuge <- i.stroke <- stroke <- NULL
+
         fullchar <- data.table::copy(dict_char())
         fullchar[dict_conv(),
             on = c("character" = "simplified"),

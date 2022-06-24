@@ -43,6 +43,8 @@ get_wuge_char_data <- function(char, to_trad = TRUE) {
 
         # if any characters are not matched, retry with simplified characters
         if (length(miss <- which(is.na(match$stroke)))) {
+            # NOTE: to make CRAN checks happy
+            J <- NULL
             data.table::set(
                 match, miss,
                 c("character", "stroke", "pinyin", "radical", "stroke_wuge"),

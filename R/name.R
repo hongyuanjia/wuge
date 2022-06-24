@@ -105,6 +105,8 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
     )
 
     thld_sancai <- if (allow_general) 60L else 75L
+    # NOTE: to make CRAN checks happy
+    score_sancai <- NULL
     wuge_sancai_sel <- wuge_sel[score_sancai >= thld_sancai]
 
     # calculate total score
