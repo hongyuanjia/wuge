@@ -138,8 +138,8 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         })
     )
 
-    assert_choice(min_wuge, names(SCORE_WUGE))
-    assert_choice(min_sancai, names(SCORE_SANCAI))
+    assert_choice(min_wuge, names(SCORE_WUGE), null_ok = FALSE)
+    assert_choice(min_sancai, names(SCORE_SANCAI), null_ok = FALSE)
 
     # only select entries that exceeds the threshold
     thld_wuge <- SCORE_WUGE[data.table::chmatch(min_wuge, names(SCORE_WUGE))]
@@ -230,14 +230,24 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 }
 
 #' @param strokes An integer vector of WuGe strokes
+#'
+#' @param common If `TRUE`, only common Chinese characters will be used. Default:
+#'        `FALSE`
 #' @noRd
-get_char_data_from_stroke <- function(strokes) {
+get_char_data_from_stroke <- function(strokes, common = TRUE) {
+    assert_flag(common)
     input <- data.table::data.table(
         index = seq_len(length(strokes)),
         stroke_wuge = strokes,
         key = "stroke_wuge"
     )
 
-    dict_fullchar()[input, on = "stroke_wuge"][,
-        lapply(.SD, list), by = c("index", "stroke_wuge")]
+    dict <- dict_fullchar()
+    if (common) {
+        path <- system.file("extdata/char_common.csv", package = "wuge")
+        DICT_CHAR_COMMON <- data.table::fread(path, encoding = "UTF-8")
+        dict <- dict[J(DICT_CHAR_COMMON$character), on = "character"]
+    }
+
+    dict[input, on = "stroke_wuge"][, lapply(.SD, list), by = c("index", "stroke_wuge")]
 }

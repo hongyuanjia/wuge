@@ -32,8 +32,7 @@ assert_choice <- function(x, choices, null_ok = TRUE) {
             nm, str_join(sQuote(choices), sep = ", "), x
         ))
     }
-
-    as.integer(x)
+    x
 }
 
 is_count <- function(x, min = 0L) {

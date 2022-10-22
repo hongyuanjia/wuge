@@ -202,6 +202,14 @@ format_tbl_char <- function(file = here::here("tools/data/char_base.json")) {
     )
 }
 
+format_tbl_char_common <- function(file = here::here("tools/data/char_common.json")) {
+    lst <- jsonlite::read_json(file)
+    data.table::data.table(
+        character = vapply(lst, `[[`, "", "char"),
+        frequency = vapply(lst, `[[`, 1L, "frequency")
+    )
+}
+
 format_tbl_kangxi <- function(file = here::here("tools/data/kangxi.csv"),
                               wuxing = here::here("tools/data/kangxi_wuxing.csv")) {
     dt <- data.table::fread(file)
@@ -312,6 +320,10 @@ init_file("ImportShuli.php", "app/Console/Commands", "whmnoe4j/Calendar") |>
 init_file("char_base.json", "data/character", "mapull/chinese-dictionary") |>
     format_tbl_char() |>
     data.table::fwrite(here::here("inst/extdata/char.csv"))
+
+init_file("char_common.json", "data/character", "mapull/chinese-dictionary") |>
+    format_tbl_char_common() |>
+    data.table::fwrite(here::here("inst/extdata/char_common.csv"))
 
 init_file("kangxi.csv", "vendor/data", "fh250250/fortune") |>
     format_tbl_kangxi() |>
