@@ -303,6 +303,10 @@ format_tbl_health <- function(file = here::here("tools/data/health.json")) {
     list(sancai = sancai, desc = desc)
 }
 
+source(here::here("tools/query.R"))
+# get all shuli from http://ceshi.hanyunshi.com/xingming/
+query_all_shuli()
+
 unlink(here::here("tools/meta.json"))
 
 init_file("STCharacters.txt", "data/dictionary", "BYVoid/OpenCC") |>
