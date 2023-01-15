@@ -14,59 +14,59 @@
 ## usethis namespace: end
 NULL
 
-BBN_ENV <- new.env(parent = emptyenv())
-BBN_ENV$conv <- NULL
-BBN_ENV$char <- NULL
-BBN_ENV$fullchar <- NULL
-BBN_ENV$kangxi <- NULL
-BBN_ENV$sancai <- NULL
-BBN_ENV$special_sancai <- NULL
-BBN_ENV$luck_base <- NULL
-BBN_ENV$luck_success <- NULL
-BBN_ENV$luck_social <- NULL
-BBN_ENV$luck_health <- NULL
+.GLOBAL <- new.env(parent = emptyenv())
+.GLOBAL$conv <- NULL
+.GLOBAL$char <- NULL
+.GLOBAL$fullchar <- NULL
+.GLOBAL$kangxi <- NULL
+.GLOBAL$sancai <- NULL
+.GLOBAL$special_sancai <- NULL
+.GLOBAL$luck_base <- NULL
+.GLOBAL$luck_success <- NULL
+.GLOBAL$luck_social <- NULL
+.GLOBAL$luck_health <- NULL
 
 dict_conv <- function(force = FALSE) {
-    if (is.null(BBN_ENV$conv)) force <- TRUE
+    if (is.null(.GLOBAL$conv)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/stconv.csv", package = "wuge")
         conv <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(conv, "simplified")
-        BBN_ENV$conv <- conv
+        .GLOBAL$conv <- conv
     }
 
-    BBN_ENV$conv
+    .GLOBAL$conv
 }
 
 dict_char <- function(force = FALSE) {
-    if (is.null(BBN_ENV$char)) force <- TRUE
+    if (is.null(.GLOBAL$char)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/char.csv", package = "wuge")
         char <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(char, "character")
-        BBN_ENV$char <- char
+        .GLOBAL$char <- char
     }
 
-    BBN_ENV$char
+    .GLOBAL$char
 }
 
 dict_kangxi <- function(force = FALSE) {
-    if (is.null(BBN_ENV$kangxi)) force <- TRUE
+    if (is.null(.GLOBAL$kangxi)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/kangxi.csv", package = "wuge")
         kangxi <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(kangxi, "character")
-        BBN_ENV$kangxi <- kangxi
+        .GLOBAL$kangxi <- kangxi
     }
 
-    BBN_ENV$kangxi
+    .GLOBAL$kangxi
 }
 
 dict_fullchar <- function(force = FALSE) {
-    if (is.null(BBN_ENV$fullchar)) force <- TRUE
+    if (is.null(.GLOBAL$fullchar)) force <- TRUE
 
     if (force) {
         # NOTE: to make CRAN checks happy
@@ -98,92 +98,92 @@ dict_fullchar <- function(force = FALSE) {
         data.table::setindexv(fullchar, "stroke")
         data.table::setindexv(fullchar, "stroke_wuge")
 
-        BBN_ENV$fullchar <- fullchar
+        .GLOBAL$fullchar <- fullchar
     }
 
-    BBN_ENV$fullchar
+    .GLOBAL$fullchar
 }
 
 dict_sancai <- function(force = FALSE) {
-    if (is.null(BBN_ENV$sancai)) force <- TRUE
+    if (is.null(.GLOBAL$sancai)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/sancai.csv", package = "wuge")
         sancai <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(sancai, "wuxing")
-        BBN_ENV$sancai <- sancai
+        .GLOBAL$sancai <- sancai
     }
 
-    BBN_ENV$sancai
+    .GLOBAL$sancai
 }
 
 dict_special_sancai <- function(force = FALSE) {
-    if (is.null(BBN_ENV$special_sancai)) force <- TRUE
+    if (is.null(.GLOBAL$special_sancai)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/special_sancai.csv", package = "wuge")
         special_sancai <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(special_sancai, "wuxing")
-        BBN_ENV$special_sancai <- special_sancai
+        .GLOBAL$special_sancai <- special_sancai
     }
 
-    BBN_ENV$special_sancai
+    .GLOBAL$special_sancai
 }
 
 dict_shuli <- function(force = FALSE) {
-    if (is.null(BBN_ENV$shuli)) force <- TRUE
+    if (is.null(.GLOBAL$shuli)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/shuli.csv", package = "wuge")
         shuli <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(shuli, "num")
-        BBN_ENV$shuli <- shuli
+        .GLOBAL$shuli <- shuli
     }
 
-    BBN_ENV$shuli
+    .GLOBAL$shuli
 }
 
 dict_luck_base <- function(force = FALSE) {
-    if (is.null(BBN_ENV$luck_base)) force <- TRUE
+    if (is.null(.GLOBAL$luck_base)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/luck_base.csv", package = "wuge")
         luck_base <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(luck_base, c("ren", "di"))
-        BBN_ENV$luck_base <- luck_base
+        .GLOBAL$luck_base <- luck_base
     }
 
-    BBN_ENV$luck_base
+    .GLOBAL$luck_base
 }
 
 dict_luck_success <- function(force = FALSE) {
-    if (is.null(BBN_ENV$luck_success)) force <- TRUE
+    if (is.null(.GLOBAL$luck_success)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/luck_success.csv", package = "wuge")
         luck_success <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(luck_success, c("ren", "tian"))
-        BBN_ENV$luck_success <- luck_success
+        .GLOBAL$luck_success <- luck_success
     }
 
-    BBN_ENV$luck_success
+    .GLOBAL$luck_success
 }
 
 dict_luck_social <- function(force = FALSE) {
-    if (is.null(BBN_ENV$luck_social)) force <- TRUE
+    if (is.null(.GLOBAL$luck_social)) force <- TRUE
 
     if (force) {
         path <- system.file("extdata/luck_social.csv", package = "wuge")
         luck_social <- data.table::fread(path, encoding = "UTF-8")
         data.table::setindexv(luck_social, c("ren", "wai"))
-        BBN_ENV$luck_social <- luck_social
+        .GLOBAL$luck_social <- luck_social
     }
 
-    BBN_ENV$luck_social
+    .GLOBAL$luck_social
 }
 
 dict_luck_health <- function(force = FALSE) {
-    if (is.null(BBN_ENV$luck_health)) force <- TRUE
+    if (is.null(.GLOBAL$luck_health)) force <- TRUE
 
     if (force) {
         path_sancai <- system.file("extdata/luck_health_sancai.csv", package = "wuge")
@@ -196,8 +196,8 @@ dict_luck_health <- function(force = FALSE) {
         luck_health[desc, on = "index", description := i.description]
         data.table::set(luck_health, NULL, "index", NULL)
         data.table::setindexv(luck_health, c("tian", "ren", "di"))
-        BBN_ENV$luck_health <- luck_health
+        .GLOBAL$luck_health <- luck_health
     }
 
-    BBN_ENV$luck_health
+    .GLOBAL$luck_health
 }
