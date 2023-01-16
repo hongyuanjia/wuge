@@ -135,7 +135,7 @@ format_tbl_sancai <- function(file = here::here("tools/data/sancai.txt")) {
     sancai
 }
 
-format_tbl_wuge <- function(file = here::here("tools/data/ImportShuli.php"), shuli_httpcn = here::here("tools/data/query/shuli.csv")) {
+format_tbl_shuli <- function(file = here::here("tools/data/ImportShuli.php")) {
     lines <- data.table::fread(file, sep = NULL, header = FALSE)$V1
     i_start <- which(grepl("^【[0-9]{1,2}[^0-9]{3,}】", lines))
 
@@ -162,9 +162,6 @@ format_tbl_wuge <- function(file = here::here("tools/data/ImportShuli.php"), shu
     full <- clean_period(substring(lines[i_start + 5L], 5L))
     future <- clean_period(substring(lines[i_start + 6L], 5L))
     fortune <- clean_period(gsub("&$", "", substring(lines[i_start + 7L], 5L)))
-
-    browser()
-    shuli <- data.table::fread(shuli_httpcn)
 
     num_fortune <- data.table::data.table(
         num = num,
@@ -231,7 +228,7 @@ format_tbl_kangxi <- function(file = here::here("tools/data/kangxi.csv"),
     dt
 }
 
-format_tbl_career <- function(file = here::here("tools/data/career.csv")) {
+format_tbl_luck_career <- function(file = here::here("tools/data/career.csv")) {
     dt <- data.table::fread(file)
     map <- data.table::data.table(
         num = c("1或2", "3或4", "5或6", "7或8", "9或0"),
@@ -256,7 +253,7 @@ format_tbl_career <- function(file = here::here("tools/data/career.csv")) {
     list(base = base, success = success)
 }
 
-format_tbl_social <- function(file = here::here("tools/data/social.csv")) {
+format_tbl_luck_social <- function(file = here::here("tools/data/social.csv")) {
     dt <- data.table::fread(file)
     data.table::setnames(dt, c("ren", "wai", "jixiong", "description"))
     dt
@@ -268,7 +265,7 @@ format_tbl_special_sancai <- function(file = here::here("tools/data/special_sanc
     dt
 }
 
-format_tbl_health <- function(file = here::here("tools/data/health.json")) {
+format_tbl_luck_health <- function(file = here::here("tools/data/health.json")) {
     df <- jsonlite::fromJSON(file, simplifyDataFrame = TRUE)
 
     desc <- data.table::data.table(

@@ -1,53 +1,34 @@
-source(here::here("tools/query.R"))
-source(here::here("tools/format.R"))
+source(here::here("tools/gen.R"))
+gen_dict(
+    c(
+        # 简体到繁体转换表
+        # 数据来源：BYVoid/OpenCC
+        "stconv",
 
-# get all shuli from http://ceshi.hanyunshi.com/xingming/
-shuli <- query_all_shuli()
+        # 三才
+        # 数据来源：JakLiao/GoodGoodName
+        "sancai",
 
-unlink(here::here("tools/meta.json"))
+        # 五格数理
+        # 数据来源：whmnoe4j/Calendar
+        "shuli",
 
-init_file("STCharacters.txt", "data/dictionary", "BYVoid/OpenCC") |>
-    format_tbl_conv() |>
-    data.table::fwrite(here::here("inst/extdata/stconv.csv"))
+        # 汉字字典
+        # 数据来源：mapull/chinese-dictionary
+        "char",
 
-init_file("sancai.txt", "data", "JakLiao/GoodGoodName", "sancai.txt") |>
-    format_tbl_sancai() |>
-    data.table::fwrite(here::here("inst/extdata/sancai.csv"))
+        # 3500 常用汉字
+        # 数据来源：mapull/chinese-dictionary
+        "char_common",
 
-init_file("ImportShuli.php", "app/Console/Commands", "whmnoe4j/Calendar") |>
-    format_tbl_wuge() |>
-    data.table::fwrite(here::here("inst/extdata/shuli.csv"))
+        # 康熙字典
+        # 数据来源：fh250250/fortune 和 sinshine/AI-name
+        "kangxi",
 
-init_file("char_base.json", "data/character", "mapull/chinese-dictionary") |>
-    format_tbl_char() |>
-    data.table::fwrite(here::here("inst/extdata/char.csv"))
+        # 特殊三才(如'金金金')的解释
+        "special",
 
-init_file("char_common.json", "data/character", "mapull/chinese-dictionary") |>
-    format_tbl_char_common() |>
-    data.table::fwrite(here::here("inst/extdata/char_common.csv"))
-
-init_file("kangxi.csv", "vendor/data", "fh250250/fortune") |>
-    format_tbl_kangxi() |>
-    data.table::fwrite(here::here("inst/extdata/kangxi.csv"))
-
-format_tbl_kangxi(
-    init_file("kangxi.csv", "vendor/data", "fh250250/fortune"),
-    init_file("wuxing.csv", "data", "sinshine/AI-name", "kangxi_wuxing.csv")
-    ) |>
-    data.table::fwrite(here::here("inst/extdata/kangxi.csv"))
-
-format_tbl_special_sancai() %>%
-    data.table::fwrite(here::here("inst/extdata/special_sancai.csv"))
-
-format_tbl_social() %>%
-    data.table::fwrite(here::here("inst/extdata/luck_social.csv"))
-
-Map(data.table::fwrite,
-    format_tbl_career(),
-    here::here("inst/extdata", c("luck_base.csv", "luck_success.csv"))
-)
-
-Map(data.table::fwrite,
-    format_tbl_health(),
-    here::here("inst/extdata", c("luck_health_sancai.csv", "luck_health_desc.csv"))
+        # 运势的解释，包括基础运、社交运、成功运、健康
+        "luck"
+    )
 )
