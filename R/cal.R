@@ -259,6 +259,13 @@ get_wuge_luck <- function(wuge) {
     list(base = base, success = success, social = social, health = health)
 }
 
+get_wuge_score_shuli <- function(tian, di, ren, wai, zong) {
+    tian * 0.05 + di * 0.20 + ren * 0.50 + wai * 0.05 + zong * 0.20
+}
+get_wuge_score_total <- function(shuli, sancai) {
+    round(shuli * 0.75 + sancai * 0.25, 1L)
+}
+
 get_wuge_score <- function(wuge) {
     score <- data.table::copy(wuge)
 
@@ -285,11 +292,8 @@ get_wuge_score <- function(wuge) {
             )
         }
     )
-    data.table::set(score, NULL, "score_wuge",
-        with(score,
-             score_tian * 0.05 + score_di * 0.20 + score_ren * 0.50 +
-             score_wai * 0.05 + score_zong * 0.20
-        )
+    data.table::set(score, NULL, "score_shuli",
+        with(score, get_wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
     )
     data.table::set(score, NULL, "score_sancai",
         with(score, {
@@ -297,9 +301,7 @@ get_wuge_score <- function(wuge) {
             all_sancai$score[data.table::chmatch(sancai, all_sancai$wuxing)]
         })
     )
-    data.table::set(score, NULL, "score_total",
-        round(score$score_wuge * 0.75 + score$score_sancai * 0.25, 1L)
-    )
+    data.table::set(score, NULL, "score_total", get_wuge_score_total(score$score_shuli, score$score_sancai))
 
     data.table::setcolorder(score,
         c("index", "tian", "ren", "di", "wai", "zong", "sancai")

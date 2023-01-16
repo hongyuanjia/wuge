@@ -177,20 +177,17 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
     wuge_sancai_sel <- wuge_sel[score_sancai >= thld_sancai]
 
     # calculate total score
-    data.table::set(wuge_sancai_sel, NULL, "score_wuge",
-        with(wuge_sancai_sel,
-            score_tian * 0.05 + score_di * 0.20 + score_ren * 0.50 +
-                score_wai * 0.05 + score_zong * 0.20
-        )
+    data.table::set(wuge_sancai_sel, NULL, "score_shuli",
+        with(wuge_sancai_sel, get_wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
     )
     data.table::set(wuge_sancai_sel, NULL, "score_total",
-        with(wuge_sancai_sel, round(score_wuge * 0.75 + score_sancai * 0.25, 1L))
+        with(wuge_sancai_sel, get_wuge_score_total(score_shuli, score_sancai))
     )
-    data.table::set(wuge_sancai_sel, NULL, "score_wuge", round(wuge_sancai_sel$score_wuge, 1L))
+    data.table::set(wuge_sancai_sel, NULL, "score_shuli", round(wuge_sancai_sel$score_shuli, 1L))
 
     # order by scores
     data.table::setorderv(wuge_sancai_sel,
-        c("index", "score_total", "score_wuge", "score_sancai"),
+        c("index", "score_total", "score_shuli", "score_sancai"),
         c(1L, -1L, -1L, -1L)
     )
 
@@ -219,7 +216,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
             "jixiong_tian", "jixiong_ren", "jixiong_di", "jixiong_wai",
             "jixiong_zong", "jixiong_sancai",
             "score_tian", "score_ren", "score_di", "score_wai", "score_zong",
-            "score_wuge", "score_sancai", "score_total"
+            "score_shuli", "score_sancai", "score_total"
         )
     )
 
