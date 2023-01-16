@@ -676,8 +676,8 @@ query_all_shuli <- function(force = FALSE) {
 
     data.table::set(shuli, NULL, c("description", "fortune"),
         list(
-            vapply(shuli$description, paste0, "", collapse = "\n"),
-            vapply(shuli$fortune, paste0, "", collapse = "\n")
+            vapply(shuli$description, paste0, "", collapse = "||"),
+            vapply(shuli$fortune, paste0, "", collapse = "||")
         )
     )
 
@@ -773,7 +773,7 @@ query_all_sancai <- function(force = FALSE) {
         lapply(res, function(r) {
             out <- r$sancai
             out$definition <- NULL
-            out$detail <- paste0(out$detail, collapse = "\n")
+            out$detail <- paste0(out$detail, collapse = "||")
             out
         })
     )

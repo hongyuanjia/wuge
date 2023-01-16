@@ -89,8 +89,8 @@ gen_shuli <- function(update = FALSE) {
                 jixiong = i.jixiong,
                 short = i.short,
                 score = i.score,
-                description = sprintf("(1)%s\n(2)%s", description, i.description),
-                indication = sprintf("%s\n%s", indication, i.fortune)
+                description = sprintf("(1)%s||(2)%s", description, i.description),
+                indication = sprintf("%s||%s", indication, i.fortune)
             )
         }
     ]
