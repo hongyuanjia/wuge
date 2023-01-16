@@ -624,6 +624,13 @@ query_all_common_char <- function(force = FALSE) {
 
     char <- data.table::rbindlist(list(dt_char[!is.na(xing)], comb), use.names = TRUE)
     data.table::setcolorder(char, c("xing", "ming1", "ming2", "total_stroke", "xing_stroke", "ming1_stroke", "ming2_stroke"))
+
+    # it is possible the characters with 5 strokes are incorrect
+    # here use '巨' which is guaranteed to be correct
+    char[xing_stroke == 5L, xing := "巨"]
+    char[ming1_stroke == 5L, ming1 := "巨"]
+    char[ming2_stroke == 5L, ming2 := "巨"]
+
     if (!dir.exists(dirname(fpath))) dir.create(dirname(fpath))
     data.table::fwrite(char, fpath)
     char

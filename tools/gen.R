@@ -52,11 +52,6 @@ init_sources <- function(types = NULL, update = FALSE) {
 
 path_dest <- function(dest) here::here("inst/extdata", dest)
 
-gen_dict <- function(update = FALSE) {
-    paths <- get_path("STCharacters.txt", "stconv.csv")
-    if (!file.exists(paths["src"])) update <- TRUE
-}
-
 gen_stconv <- function(update = FALSE) {
     src <- init_sources("stconv", update = update)
     data.table::fwrite(format_tbl_conv(src), path_dest("stconv.csv"))
@@ -69,7 +64,34 @@ gen_sancai <- function(update = FALSE) {
 
 gen_shuli <- function(update = FALSE) {
     src <- init_sources("shuli", update = update)
-    data.table::fwrite(format_tbl_shuli(src), path_dest("shuli.csv"))
+    shuli1 <- format_tbl_shuli(src)
+    shuli2 <- query_all_shuli(force = update)
+    data.table::setnames(shuli1, c("desc_full", "desc"), c("description", "indication"))
+
+    stopifnot(all(shuli1$num == shuli2$number))
+
+    shuli1[shuli2, on = c("num" = "number"),
+        c("brief", "jixiong", "short", "score", "description", "indication") := {
+            same <- brief == i.brief
+            brief[!same] <- sprintf("%s(%s)", brief[!same], i.brief[!same])
+
+            list(
+                brief = brief,
+                jixiong = i.jixiong,
+                short = i.short,
+                score = i.score,
+                description = sprintf("(1)%s\n(2)%s", description, i.description),
+                indication = sprintf("%s\n%s", indication, i.fortune)
+            )
+        }
+    ]
+    data.table::setcolorder(shuli1,
+        c("num", "score", "jixiong", "short", "brief", "indication",
+            "foundation", "family", "health", "future", "fortune", "description"
+        )
+    )
+
+    data.table::fwrite(shuli1, path_dest("shuli.csv"))
 }
 
 gen_char <- function(update = FALSE) {
