@@ -229,7 +229,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 #' @param strokes An integer vector of WuGe strokes
 #'
 #' @param common If `TRUE`, only common Chinese characters will be used. Default:
-#'        `FALSE`
+#'        `TRUE`
 #' @noRd
 get_char_data_from_stroke <- function(strokes, common = TRUE) {
     assert_flag(common)
@@ -246,5 +246,7 @@ get_char_data_from_stroke <- function(strokes, common = TRUE) {
         dict <- dict[J(DICT_CHAR_COMMON$character), on = "character"]
     }
 
-    dict[input, on = "stroke_wuge"][, lapply(.SD, list), by = c("index", "stroke_wuge")]
+    res <- dict[input, on = "stroke_wuge"][, lapply(.SD, list), by = c("index", "stroke_wuge")]
+    data.table::setorderv(res, "index")
+    res
 }
