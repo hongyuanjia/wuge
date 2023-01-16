@@ -153,22 +153,23 @@ get_wuge_shuli <- function(wuge) {
     )
     data.table::set(shuli, NULL, "wuxing", get_stroke_wuxing(shuli$num))
     data.table::set(shuli, NULL,
-        c("score", "brief", "desc", "jixiong", "foundation", "family", "health", "future",
-            "fortune", "desc_full"),
+        c("score", "jixiong", "brief", "short", "indication", "foundation",
+            "family", "health", "future", "fortune", "description"),
         with(dict_shuli(),
             {
                 ind <- shuli$num
                 list(
                     .subset(score, ind),
-                    .subset(brief, ind),
-                    .subset(desc, ind),
                     .subset(jixiong, ind),
+                    .subset(brief, ind),
+                    .subset(short, ind),
+                    .subset(indication, ind),
                     .subset(foundation, ind),
                     .subset(family, ind),
                     .subset(health, ind),
                     .subset(future, ind),
                     .subset(fortune, ind),
-                    .subset(desc_full, ind)
+                    .subset(description, ind)
                 )
             }
         )
@@ -188,11 +189,14 @@ get_wuge_sancai <- function(wuge) {
             paste0(get_stroke_wuxing(tian), get_stroke_wuxing(ren), get_stroke_wuxing(di))
         )
     )
-    data.table::set(sancai, NULL, c("jixiong", "score", "description"),
+    data.table::set(sancai, NULL, c("jixiong", "score", "brief", "description", "detail"),
         {
             dsancai <- dict_sancai()
             ind <- data.table::chmatch(sancai$wuxing, dsancai$wuxing)
-            list(dsancai$jixiong[ind], dsancai$score[ind], dsancai$description[ind])
+            list(
+                dsancai$jixiong[ind], dsancai$score[ind], dsancai$brief[ind],
+                dsancai$description[ind], dsancai$detail[ind]
+            )
         }
     )
 
