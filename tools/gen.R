@@ -59,7 +59,16 @@ gen_stconv <- function(update = FALSE) {
 
 gen_sancai <- function(update = FALSE) {
     src <- init_sources("sancai", update = update)
-    data.table::fwrite(format_tbl_sancai(src), path_dest("sancai.csv"))
+    sancai1 <- format_tbl_sancai(src)
+    sancai2 <- query_all_sancai(force = update)
+
+    sancai1[sancai2, on = "wuxing", `:=`(
+        jixiong = i.jixiong, score = i.score, brief = i.brief, detail = i.detail
+    )]
+
+    data.table::setcolorder(sancai1, c("wuxing", "score", "mod1", "mod2",
+        "jixiong", "brief", "description", "detail"))
+    data.table::fwrite(sancai1, path_dest("sancai.csv"))
 }
 
 gen_shuli <- function(update = FALSE) {

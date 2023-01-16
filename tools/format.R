@@ -118,6 +118,21 @@ format_tbl_sancai <- function(file = here::here("tools/data/sancai.txt")) {
         description = desc
     )
 
+    # 金金火 is missing
+    # ref: https://baike.baidu.com/item/三才数理
+    patch <- data.table::data.table(
+        wuxing = "金金火",
+        mod1 = "773",
+        mod2 = "784",
+        jixiong = "大凶",
+        description = "虽因勤奋可得一时之成功发展，但绝对的不安定，杂乱灾祸与变动殊多，必定早因不测之危祸或遭难或外伤或交通事故，或被人杀害或发狂杀人，而引致短寿凶终。"
+    )
+    sancai <- data.table::rbindlist(list(
+        sancai[1:which(sancai$wuxing == "金金木")],
+        patch,
+        sancai[which(sancai$wuxing == "金金土"):nrow(sancai)]
+    ))
+
     data.table::set(sancai, NULL, "score",
         with(sancai,
             data.table::fcase(

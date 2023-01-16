@@ -577,14 +577,14 @@ query_all_common_char <- function(force = FALSE) {
         format = "[{cli::pb_current}/{cli::pb_total}] | {cli::pb_percent} {cli::pb_bar} [Elapsed: {cli::pb_elapsed}]"
     )
     res <- vector("list", nrow(char_common))
+    # Kangxi strokes to query
     for (i in seq_along(res)) {
-        cli::cli_progress_output("Query character {.val {char_common$character[[i]]}}...")
         cli::cli_progress_update(1L)
         res[[i]] <- tryCatch(
             query_char(char_common$character[[i]]),
             error = function(e) {
-                cli::cli_progress_message(conditionMessage(e))
-                list()
+                cli::cli_alert_warning(conditionMessage(e))
+                list(stroke_kangxi = NA_integer_)
             }
         )
     }
@@ -639,10 +639,7 @@ query_all_common_char <- function(force = FALSE) {
 query_all_shuli <- function(force = FALSE) {
     fpath <- here::here("tools/data/query/shuli.csv")
     if (!(fexist <- file.exists(fpath))) force <- TRUE
-
-    if (fexist && !force) {
-        return(data.table::fread(here::here("tools/data/query/shuli.csv")))
-    }
+    if (fexist && !force) return(data.table::fread(fpath))
 
     if (!file.exists(here::here("tools/data/query/char.csv"))) {
         query_all_common_char()
@@ -687,4 +684,101 @@ query_all_shuli <- function(force = FALSE) {
     if (!dir.exists(dirname(fpath))) dir.create(dirname(fpath))
     data.table::fwrite(shuli, fpath)
     shuli
+}
+
+query_all_sancai <- function(force = FALSE) {
+    fpath <- here::here("tools/data/query/sancai.csv")
+    if (!(fexist <- file.exists(fpath))) force <- TRUE
+    if (fexist && !force) return(data.table::fread(fpath))
+
+    if (!file.exists(here::here("tools/data/query/char.csv"))) {
+        query_all_common_char()
+    }
+    char <- data.table::fread(here::here("tools/data/query/char.csv"))
+    char <- char[ming1_stroke == 0L]
+    strokes <- char$xing_stroke
+
+    wuxing <- c("金", "木", "水", "火", "土")
+    full_sancai <- do.call(paste0, data.table::CJ(wuxing, wuxing, wuxing))
+
+    # one char in xing & one char in ming
+    get_wuxing <- function(stroke) {
+        mod <- stroke %% 10L
+        data.table::fcase(
+            mod %in% c(1L, 2L), "木",
+            mod %in% c(3L, 4L), "火",
+            mod %in% c(5L, 6L), "土",
+            mod %in% c(7L, 8L), "金",
+            mod %in% c(9L, 0L), "水"
+        )
+    }
+    get_tian <- function(xing_stroke, ming_stroke) {
+        get_wuxing(if (length(xing_stroke) == 1L) xing_stroke + 1L else sum(xing_stroke))
+    }
+    get_ren <- function(xing_stroke, ming_stroke) {
+        get_wuxing(xing_stroke[length(xing_stroke)] + ming_stroke[1L])
+    }
+    get_di <- function(xing_stroke, ming_stroke) {
+        get_wuxing(if (length(ming_stroke) == 1L) ming_stroke[1L] + 1L else sum(ming_stroke))
+    }
+    get_sancai <- function(xing_stroke, ming_stroke) {
+        paste0(
+            get_tian(xing_stroke, ming_stroke),
+            get_ren(xing_stroke, ming_stroke),
+            get_di(xing_stroke, ming_stroke)
+        )
+    }
+
+    comb <- data.table::CJ(xing_stroke = strokes, ming1_stroke = strokes, ming2_stroke = strokes)
+    comb[, by = seq_len(nrow(comb2)), `:=`(ming_stroke = list(c(ming1_stroke, ming2_stroke)))]
+
+    ind <- c()
+    found <- c()
+    target <- full_sancai
+    for (i in seq_len(nrow(comb))) {
+        if (!length(target)) break
+        cur <- get_sancai(comb$xing_stroke[[i]], comb$ming_stroke[[i]])
+        if (cur %in% target) {
+            target <- setdiff(target, cur)
+            found <- c(found, cur)
+            ind <- c(ind, i)
+        }
+    }
+    comb <- comb[ind]
+    data.table::set(comb, NULL, "ming_stroke", NULL)
+    data.table::set(comb, NULL, "sancai", found)
+    comb[char, on = "xing_stroke", xing := i.xing]
+    comb[char, on = c("ming1_stroke" = "xing_stroke"), ming1 := i.xing]
+    comb[char, on = c("ming2_stroke" = "xing_stroke"), ming2 := i.xing]
+    comb <- comb[, list(sancai, xing, ming = paste0(ming1, ming2))]
+
+    cli::cli_progress_bar(
+        total = nrow(comb), clear = FALSE,
+        format = "[{cli::pb_current}/{cli::pb_total}] | {cli::pb_percent} {cli::pb_bar} [Elapsed: {cli::pb_elapsed}]"
+    )
+    res <- vector("list", nrow(comb))
+    for (i in seq_along(res)) {
+        cli::cli_progress_output("Query Sancai={.val {comb$sancai[[i]]}}...")
+        cli::cli_progress_update(1L)
+        res[[i]] <- tryCatch(
+            query_name(comb$xing[i], comb$ming[i], "男", Sys.Date()),
+            error = function(e) {
+                cli::cli_progress_message(conditionMessage(e))
+                list()
+            }
+        )
+    }
+
+    sancai <- data.table::rbindlist(
+        lapply(res, function(r) {
+            out <- r$sancai
+            out$definition <- NULL
+            out$detail <- paste0(out$detail, collapse = "\n")
+            out
+        })
+    )
+
+    if (!dir.exists(dirname(fpath))) dir.create(dirname(fpath))
+    data.table::fwrite(sancai, fpath)
+    sancai
 }
