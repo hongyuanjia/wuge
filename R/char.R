@@ -5,7 +5,7 @@ char_data <- function(char) {
 
     if (anyNA(match$stroke)) {
         # NOTE: to make CRAN checks happy
-        stroke <- .N <- .BY <- NULL
+        stroke <- NULL
         info <- match[,
             sprintf("[%i] \"%s\"\n%s%s\n%s%s Unsupported character found here.",
                 .BY$index, str_join(character),

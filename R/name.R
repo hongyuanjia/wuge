@@ -95,13 +95,14 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         idcol = "index"
     )
 
+    data.table::set(wuge, NULL, "index", as.integer(wuge$index))
+    data.table::set(wuge, NULL, "id", seq.int(nrow(wuge)))
+
     # NOTE: to make CRAN checks happy
     tian <- ren <- di <- wai <- zong <- NULL
     # remove wuge that exceeds the maximum number 81
     wuge <- wuge[tian <= 81L & ren <= 81L & di <= 81L & wai <= 81L & zong <= 81L]
 
-    data.table::set(wuge, NULL, "index", as.integer(wuge$index))
-    data.table::set(wuge, NULL, "id", seq.int(nrow(wuge)))
     data.table::set(wuge, NULL,
         c("score_tian", "score_ren", "score_di", "score_wai", "score_zong",
           "jixiong_tian", "jixiong_ren", "jixiong_di", "jixiong_wai", "jixiong_zong"
@@ -133,13 +134,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 
     # get sancai in wuxing style
     data.table::set(wuge_sel, NULL, "sancai",
-        with(wuge_sel,
-            paste0(
-                stroke_wuxing(tian),
-                stroke_wuxing(ren),
-                stroke_wuxing(di)
-            )
-        )
+        with(wuge_sel, paste0(stroke_wuxing(tian), stroke_wuxing(ren), stroke_wuxing(di)))
     )
 
     # get sancai jixiong
@@ -206,6 +201,8 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
     )
 }
 
+#' Get Chinese characters that meet WuGe strokes
+#'
 #' @param strokes An integer vector of WuGe strokes
 #'
 #' @param common If `TRUE`, only common Chinese characters will be used. Default:
@@ -223,13 +220,9 @@ char_data_from_stroke <- function(strokes, common = TRUE) {
     if (common) {
         path <- system.file("extdata/char_common.csv", package = "wuge")
         DICT_CHAR_COMMON <- data.table::fread(path, encoding = "UTF-8")
-        # NOTE: to make CRAN checks happy
-        J <- NULL
         dict <- dict[J(DICT_CHAR_COMMON$character), on = "character"]
     }
 
-    # NOTE: to make CRAN checks happy
-    .SD <- NULL
     res <- dict[input, on = "stroke_wuge"][, lapply(.SD, list), by = c("index", "stroke_wuge")]
     data.table::setorderv(res, "index")
     res
