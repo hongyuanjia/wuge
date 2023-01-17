@@ -1,4 +1,4 @@
-get_avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
+avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
     if (is.null(min_stroke)) {
         min_stroke <- 1L
     } else {
@@ -54,7 +54,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 
     if (is.null(fixed_stroke)) {
         # subset Simplified Chinese strokes
-        strokes <- replicate(num_char, list(get_avail_strokes(min_stroke, max_stroke)))
+        strokes <- replicate(num_char, list(avail_strokes(min_stroke, max_stroke)))
     } else {
         if (!is.numeric(fixed_stroke) || !length(fixed_stroke)) {
             stop("`fixed_stroke` should be an integer vector.")
@@ -76,17 +76,17 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 
         strokes <- as.list(fixed_stroke)
         if (any(free <- fixed_stroke == 0L)) {
-            strokes[free] <- list(get_avail_strokes(min_stroke, max_stroke))
+            strokes[free] <- list(avail_strokes(min_stroke, max_stroke))
         }
     }
     dt_ming <- do.call(data.table::CJ, strokes)
 
-    dt_xing <- get_wuge_char_data(xing)
+    dt_xing <- wuge_char_data(xing)
 
     # calculate wuge for all possible combinations
     wuge <- data.table::rbindlist(
         Map(
-            get_wuge_val,
+            wuge_val,
             stroke_xing = split.default(dt_xing$stroke_wuge, dt_xing$index),
             stroke_ming = replicate(length(xing), dt_ming, simplify = FALSE),
             len_xing = nchar(xing),
@@ -135,9 +135,9 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
     data.table::set(wuge_sel, NULL, "sancai",
         with(wuge_sel,
             paste0(
-                get_stroke_wuxing(tian),
-                get_stroke_wuxing(ren),
-                get_stroke_wuxing(di)
+                stroke_wuxing(tian),
+                stroke_wuxing(ren),
+                stroke_wuxing(di)
             )
         )
     )
@@ -158,12 +158,10 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
     score_tian <- score_ren <- score_di <- score_wai <- score_zong <- NULL
     # calculate total score
     data.table::set(wuge_sancai_sel, NULL, "score_shuli",
-        with(wuge_sancai_sel, get_wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
+        with(wuge_sancai_sel, wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
     )
-    # NOTE: to make CRAN checks happy
-    score_shuli <- score_sancai <- NULL
     data.table::set(wuge_sancai_sel, NULL, "score_total",
-        with(wuge_sancai_sel, get_wuge_score_total(score_shuli, score_sancai))
+        wuge_score_total(wuge_sancai_sel$score_shuli, wuge_sancai_sel$score_sancai)
     )
     data.table::set(wuge_sancai_sel, NULL, "score_shuli", round(wuge_sancai_sel$score_shuli, 1L))
 
@@ -213,7 +211,7 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
 #' @param common If `TRUE`, only common Chinese characters will be used. Default:
 #'        `TRUE`
 #' @noRd
-get_char_data_from_stroke <- function(strokes, common = TRUE) {
+char_data_from_stroke <- function(strokes, common = TRUE) {
     assert_flag(common)
     input <- data.table::data.table(
         index = seq_len(length(strokes)),
@@ -225,9 +223,13 @@ get_char_data_from_stroke <- function(strokes, common = TRUE) {
     if (common) {
         path <- system.file("extdata/char_common.csv", package = "wuge")
         DICT_CHAR_COMMON <- data.table::fread(path, encoding = "UTF-8")
+        # NOTE: to make CRAN checks happy
+        J <- NULL
         dict <- dict[J(DICT_CHAR_COMMON$character), on = "character"]
     }
 
+    # NOTE: to make CRAN checks happy
+    .SD <- NULL
     res <- dict[input, on = "stroke_wuge"][, lapply(.SD, list), by = c("index", "stroke_wuge")]
     data.table::setorderv(res, "index")
     res

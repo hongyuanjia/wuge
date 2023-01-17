@@ -9,7 +9,7 @@
 #' @param len_ming An integer indicating the input number of given names
 #'
 #' @noRd
-get_wuge_val <- function(stroke_xing, stroke_ming, len_xing = length(stroke_xing), len_ming = length(stroke_ming)) {
+wuge_val <- function(stroke_xing, stroke_ming, len_xing = length(stroke_xing), len_ming = length(stroke_ming)) {
     sx <- psum(stroke_xing)
     sm <- psum(stroke_ming)
 
@@ -33,7 +33,7 @@ get_wuge_val <- function(stroke_xing, stroke_ming, len_xing = length(stroke_xing
     )
 }
 
-get_wuge_char_data <- function(char, to_trad = TRUE) {
+wuge_char_data <- function(char, to_trad = TRUE) {
     match <- split_char(char)
 
     # NOTE: right join is much faster than join and modify in place using `:=`
@@ -44,7 +44,7 @@ get_wuge_char_data <- function(char, to_trad = TRUE) {
         # if any characters are not matched, retry with simplified characters
         if (length(miss <- which(is.na(match$stroke)))) {
             # NOTE: to make CRAN checks happy
-            J <- NULL
+            J <- .SD <- NULL
             data.table::set(
                 match, miss,
                 c("character", "stroke", "pinyin", "radical", "stroke_wuge"),
@@ -87,10 +87,10 @@ get_wuge_char_data <- function(char, to_trad = TRUE) {
 #'        `TRUE`
 #'
 #' @examples
-#' get_wuge(c("张", "李"), c("三", "四五"))
+#' wuge(c("张", "李"), c("三", "四五"))
 #'
 #' @export
-get_wuge <- function(xing, ming, to_trad = TRUE) {
+wuge <- function(xing, ming, to_trad = TRUE) {
     if (length(xing) != length(ming)) {
         if (length(xing) == 1L) {
             xing <- rep(xing, length(ming))
@@ -104,8 +104,8 @@ get_wuge <- function(xing, ming, to_trad = TRUE) {
         }
     }
 
-    dt_xing <- get_wuge_char_data(xing, to_trad = to_trad)
-    dt_ming <- get_wuge_char_data(ming, to_trad = to_trad)
+    dt_xing <- wuge_char_data(xing, to_trad = to_trad)
+    dt_ming <- wuge_char_data(ming, to_trad = to_trad)
 
     num_xing <- split.default(dt_xing$stroke_wuge, dt_xing$index)
     num_ming <- split.default(dt_ming$stroke_wuge, dt_ming$index)
@@ -113,7 +113,7 @@ get_wuge <- function(xing, ming, to_trad = TRUE) {
     len_ming <- lengths(num_ming, use.names = FALSE)
 
     wuge <- data.table::rbindlist(
-        Map(get_wuge_val, num_xing, num_ming, len_xing, len_ming),
+        Map(wuge_val, num_xing, num_ming, len_xing, len_ming),
         idcol = "index"
     )
     data.table::set(wuge, NULL, "index", as.integer(wuge$index))
@@ -122,16 +122,16 @@ get_wuge <- function(xing, ming, to_trad = TRUE) {
         list(
             xing = dt_xing,
             ming = dt_ming,
-            score = get_wuge_score(wuge),
-            sancai = get_wuge_sancai(wuge),
-            shuli = get_wuge_shuli(wuge),
-            luck = get_wuge_luck(wuge)
+            score = wuge_score(wuge),
+            sancai = wuge_sancai(wuge),
+            shuli = wuge_shuli(wuge),
+            luck = wuge_luck(wuge)
         ),
         class = "WuGe"
     )
 }
 
-get_stroke_wuxing <- function(stroke) {
+stroke_wuxing <- function(stroke) {
     mod <- stroke %% 10L
     data.table::fcase(
         mod == 1L | mod == 2L, "\u6728",
@@ -142,7 +142,7 @@ get_stroke_wuxing <- function(stroke) {
     )
 }
 
-get_wuge_shuli <- function(wuge) {
+wuge_shuli <- function(wuge) {
     if (!"index" %in% names(wuge)) {
         data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
     }
@@ -151,7 +151,10 @@ get_wuge_shuli <- function(wuge) {
         id.vars = "index", variable.factor = FALSE,
         variable.name = "wuge", value.name = "num"
     )
-    data.table::set(shuli, NULL, "wuxing", get_stroke_wuxing(shuli$num))
+    data.table::set(shuli, NULL, "wuxing", stroke_wuxing(shuli$num))
+    # NOTE: to make CRAN checks happy
+    score <- jixiong <- brief <- short <- indication <- foundation <- family <- NULL
+    health <- future <- fortune <- description <- NULL
     data.table::set(shuli, NULL,
         c("score", "jixiong", "brief", "short", "indication", "foundation",
             "family", "health", "future", "fortune", "description"),
@@ -160,7 +163,7 @@ get_wuge_shuli <- function(wuge) {
                 ind <- shuli$num
                 list(
                     .subset(score, ind),
-                    .subset(jixiong, ind),
+                    jixiong[ind],
                     .subset(brief, ind),
                     .subset(short, ind),
                     .subset(indication, ind),
@@ -177,17 +180,14 @@ get_wuge_shuli <- function(wuge) {
     data.table::setorderv(shuli, "index")
 }
 
-get_wuge_sancai <- function(wuge) {
+wuge_sancai <- function(wuge) {
     if (!"index" %in% names(wuge)) {
         data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
     }
 
     sancai <- data.table::data.table(
         index = wuge$index,
-        wuxing = with(
-            wuge,
-            paste0(get_stroke_wuxing(tian), get_stroke_wuxing(ren), get_stroke_wuxing(di))
-        )
+        wuxing = paste0(stroke_wuxing(wuge$tian), stroke_wuxing(wuge$ren), stroke_wuxing(wuge$di))
     )
     data.table::set(sancai, NULL, c("jixiong", "score", "brief", "description", "detail"),
         {
@@ -212,7 +212,7 @@ get_wuge_sancai <- function(wuge) {
     sancai
 }
 
-get_wuge_luck <- function(wuge) {
+wuge_luck <- function(wuge) {
     if (!"index" %in% names(wuge)) {
         data.table::set(wuge, NULL, "index", seq_len(nrow(wuge)))
     }
@@ -222,7 +222,7 @@ get_wuge_luck <- function(wuge) {
         c(list(index = wuge$index),
             lapply(
                 .subset(wuge, c("tian", "ren", "di", "wai", "zong")),
-                get_stroke_wuxing
+                stroke_wuxing
             )
         )
     )
@@ -259,14 +259,14 @@ get_wuge_luck <- function(wuge) {
     list(base = base, success = success, social = social, health = health)
 }
 
-get_wuge_score_shuli <- function(tian, di, ren, wai, zong) {
+wuge_score_shuli <- function(tian, di, ren, wai, zong) {
     tian * 0.05 + di * 0.20 + ren * 0.50 + wai * 0.05 + zong * 0.20
 }
-get_wuge_score_total <- function(shuli, sancai) {
+wuge_score_total <- function(shuli, sancai) {
     round(shuli * 0.75 + sancai * 0.25, 1L)
 }
 
-get_wuge_score <- function(wuge) {
+wuge_score <- function(wuge) {
     score <- data.table::copy(wuge)
 
     if (!"index" %in% names(score)) {
@@ -275,33 +275,32 @@ get_wuge_score <- function(wuge) {
 
     # ref: https://github.com/whmnoe4j/Calendar/blob/master/app/Services/NameTest.php
     data.table::set(score, NULL, "sancai",
-        with(score, paste0(get_stroke_wuxing(tian), get_stroke_wuxing(ren), get_stroke_wuxing(di)))
+        paste0(stroke_wuxing(score$tian), stroke_wuxing(score$ren), stroke_wuxing(score$di))
     )
     data.table::set(score, NULL,
         c("score_tian", "score_ren", "score_di", "score_wai", "score_zong"),
         {
             all_scores <- dict_shuli()$score
-            with(score,
-                list(
-                    all_scores[tian],
-                    all_scores[ren],
-                    all_scores[di],
-                    all_scores[wai],
-                    all_scores[zong]
-                )
+            list(
+                all_scores[score$tian],
+                all_scores[score$ren],
+                all_scores[score$di],
+                all_scores[score$wai],
+                all_scores[score$zong]
             )
+
         }
     )
     data.table::set(score, NULL, "score_shuli",
-        with(score, get_wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
+        wuge_score_shuli(score$score_tian, score$score_di, score$score_ren, score$score_wai, score$score_zong)
     )
     data.table::set(score, NULL, "score_sancai",
-        with(score, {
+        {
             all_sancai <- dict_sancai()
-            all_sancai$score[data.table::chmatch(sancai, all_sancai$wuxing)]
-        })
+            all_sancai$score[data.table::chmatch(score$sancai, all_sancai$wuxing)]
+        }
     )
-    data.table::set(score, NULL, "score_total", get_wuge_score_total(score$score_shuli, score$score_sancai))
+    data.table::set(score, NULL, "score_total", wuge_score_total(score$score_shuli, score$score_sancai))
 
     data.table::setcolorder(score,
         c("index", "tian", "ren", "di", "wai", "zong", "sancai")

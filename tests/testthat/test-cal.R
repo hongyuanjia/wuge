@@ -1,13 +1,13 @@
 test_that("wuge value calculation works", {
     expect_equal(
-        get_wuge_val(13, c(3, 2), 1, 2),
+        wuge_val(13, c(3, 2), 1, 2),
         list(tian = 14L, ren = 16L, di = 5L, wai = 3L, zong = 18L)
     )
 })
 
 test_that("wuge character data extraction works", {
     expect_equal(
-        get_wuge_char_data(c("十百", "千万")),
+        wuge_char_data(c("十百", "千万")),
         data.table(
             index = c(1L, 1L, 2L, 2L),
             character = c("十", "百", "千", "万"),
@@ -19,7 +19,7 @@ test_that("wuge character data extraction works", {
     )
 
     expect_equal(
-        get_wuge_char_data(c("十百", "千万"), to_trad = FALSE),
+        wuge_char_data(c("十百", "千万"), to_trad = FALSE),
         data.table(
             index = c(1L, 1L, 2L, 2L),
             character = c("十", "百", "千", "万"),
@@ -32,10 +32,10 @@ test_that("wuge character data extraction works", {
 })
 
 test_that("wuge calculation works", {
-    wuge <- data.table::setDT(get_wuge_val(13, c(3, 2)))
+    wuge <- data.table::setDT(wuge_val(13, c(3, 2)))
 
     expect_equal(
-        get_wuge_score(wuge),
+        wuge_score(wuge),
         data.table::data.table(
             index = 1L, tian = 14, ren = 16, di = 5, wai = 3, zong = 18, sancai = "火土土",
             score_tian = 80, score_ren = 100, score_di = 100, score_wai = 100,
@@ -44,7 +44,7 @@ test_that("wuge calculation works", {
     )
 
     expect_equal(
-        names(get_wuge_shuli(wuge)),
+        names(wuge_shuli(wuge)),
         c("index", "wuge", "num", "wuxing", "score",
             "brief", "desc", "jixiong", "foundation", "family", "health",
             "future", "fortune", "desc_full"
@@ -52,16 +52,16 @@ test_that("wuge calculation works", {
     )
 
     expect_equal(
-        names(get_wuge_sancai(wuge)),
+        names(wuge_sancai(wuge)),
         c("index", "wuxing", "jixiong", "score", "description", "description_special")
     )
 
     expect_equal(
-        names(get_wuge_luck(wuge)),
+        names(wuge_luck(wuge)),
         c("base", "success", "social", "health")
     )
 
-    expect_type(wuge <- get_wuge(c("王", "司马"), "一"), "list")
+    expect_type(wuge <- wuge(c("王", "司马"), "一"), "list")
 
     expect_equal(
         names(wuge),

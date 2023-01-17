@@ -1,11 +1,11 @@
-get_char_data <- function(char) {
+char_data <- function(char) {
     match <- dict_char()[split_char(char), on = "character"]
     data.table::setcolorder(match, "index")
     data.table::setindexv(match, "character")
 
     if (anyNA(match$stroke)) {
         # NOTE: to make CRAN checks happy
-        stroke <- NULL
+        stroke <- .N <- .BY <- NULL
         info <- match[,
             sprintf("[%i] \"%s\"\n%s%s\n%s%s Unsupported character found here.",
                 .BY$index, str_join(character),
@@ -48,13 +48,13 @@ get_char_data <- function(char) {
 #' The returned integer vector is always named using input `char`.
 #'
 #' @examples
-#' get_stroke(c("千万", "鼠标"))
+#' stroke(c("千万", "鼠标"))
 #'
 #' @export
-get_stroke <- function(char) {
+stroke <- function(char) {
     # NOTE: to make CRAN checks happy
     stroke <- NULL
-    match <- get_char_data(char)[, by = "index",
+    match <- char_data(char)[, by = "index",
         list(character = str_join(character), stroke = sum(stroke))
     ]
 
@@ -79,11 +79,11 @@ get_stroke <- function(char) {
 #' Currently, polyphonics are not supported.
 #'
 #' @examples
-#' get_pinyin(c("平安", "行"))
+#' pinyin(c("平安", "行"))
 #'
 #' @export
-get_pinyin <- function(char) {
-    match <- get_char_data(char)
+pinyin <- function(char) {
+    match <- char_data(char)
     data.table::set(match, NULL, "pinyin", gsub("\\|.+$", "", match$pinyin))
 
     # NOTE: to make CRAN checks happy
