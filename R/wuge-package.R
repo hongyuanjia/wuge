@@ -110,6 +110,9 @@ dict_sancai <- function(force = FALSE) {
     if (force) {
         path <- system.file("extdata/sancai.csv", package = "wuge")
         sancai <- data.table::fread(path, encoding = "UTF-8")
+        data.table::set(sancai, NULL, "detail",
+            gsub("||", "\n", sancai$detail, fixed = TRUE)
+        )
         data.table::setindexv(sancai, "wuxing")
         .GLOBAL$sancai <- sancai
     }
@@ -136,6 +139,12 @@ dict_shuli <- function(force = FALSE) {
     if (force) {
         path <- system.file("extdata/shuli.csv", package = "wuge")
         shuli <- data.table::fread(path, encoding = "UTF-8")
+        data.table::set(shuli, NULL, "indication",
+            gsub("||", "\n", shuli$indication, fixed = TRUE)
+        )
+        data.table::set(shuli, NULL, "description",
+            gsub("||", "\n", shuli$description, fixed = TRUE)
+        )
         data.table::setindexv(shuli, "num")
         .GLOBAL$shuli <- shuli
     }
