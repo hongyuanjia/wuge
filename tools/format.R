@@ -271,6 +271,7 @@ format_tbl_luck_career <- function(file = here::here("tools/data/career.csv")) {
 format_tbl_luck_social <- function(file = here::here("tools/data/social.csv")) {
     dt <- data.table::fread(file)
     data.table::setnames(dt, c("ren", "wai", "jixiong", "description"))
+    dt[J("吉凶"), on = "jixiong", jixiong := "平"]
     dt
 }
 
