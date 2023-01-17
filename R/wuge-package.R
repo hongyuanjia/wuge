@@ -26,6 +26,8 @@ NULL
 .GLOBAL$luck_social <- NULL
 .GLOBAL$luck_health <- NULL
 
+FULL_JIXIONG <- c("大凶", "凶", "平", "半吉", "吉", "大吉")
+
 dict_conv <- function(force = FALSE) {
     if (is.null(.GLOBAL$conv)) force <- TRUE
 
@@ -113,6 +115,7 @@ dict_sancai <- function(force = FALSE) {
         data.table::set(sancai, NULL, "detail",
             gsub("||", "\n", sancai$detail, fixed = TRUE)
         )
+        data.table::set(sancai, NULL, "jixiong", ordered(sancai$jixiong, FULL_JIXIONG))
         data.table::setindexv(sancai, "wuxing")
         .GLOBAL$sancai <- sancai
     }
@@ -145,6 +148,7 @@ dict_shuli <- function(force = FALSE) {
         data.table::set(shuli, NULL, "description",
             gsub("||", "\n", shuli$description, fixed = TRUE)
         )
+        data.table::set(shuli, NULL, "jixiong", ordered(shuli$jixiong, FULL_JIXIONG))
         data.table::setindexv(shuli, "num")
         .GLOBAL$shuli <- shuli
     }
@@ -158,6 +162,7 @@ dict_luck_base <- function(force = FALSE) {
     if (force) {
         path <- system.file("extdata/luck_base.csv", package = "wuge")
         luck_base <- data.table::fread(path, encoding = "UTF-8")
+        data.table::set(luck_base, NULL, "jixiong", ordered(luck_base$jixiong, FULL_JIXIONG))
         data.table::setindexv(luck_base, c("ren", "di"))
         .GLOBAL$luck_base <- luck_base
     }
@@ -171,6 +176,7 @@ dict_luck_success <- function(force = FALSE) {
     if (force) {
         path <- system.file("extdata/luck_success.csv", package = "wuge")
         luck_success <- data.table::fread(path, encoding = "UTF-8")
+        data.table::set(luck_success, NULL, "jixiong", ordered(luck_success$jixiong, FULL_JIXIONG))
         data.table::setindexv(luck_success, c("ren", "tian"))
         .GLOBAL$luck_success <- luck_success
     }
@@ -184,6 +190,7 @@ dict_luck_social <- function(force = FALSE) {
     if (force) {
         path <- system.file("extdata/luck_social.csv", package = "wuge")
         luck_social <- data.table::fread(path, encoding = "UTF-8")
+        data.table::set(luck_social, NULL, "jixiong", ordered(luck_social$jixiong, FULL_JIXIONG))
         data.table::setindexv(luck_social, c("ren", "wai"))
         .GLOBAL$luck_social <- luck_social
     }

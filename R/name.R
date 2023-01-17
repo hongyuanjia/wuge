@@ -1,22 +1,3 @@
-SCORE_WUGE <- c(
-    "\u5927\u5409"             = 100L,
-    "\u5409"                   = 90L,
-    "\u534a\u5409"             = 80L,
-    "\u534a\u5409\u534a\u51f6" = 60L,
-    "\u51f6"                   = 40L,
-    "\u5927\u51f6"             = 30L
-)
-
-SCORE_SANCAI <- c(
-    "\u5927\u5409"             = 100L,
-    "\u5409"                   = 95L,
-    "\u4e2d\u5409"             = 85L,
-    "\u5409\u591a\u4e8e\u51f6" = 75L,
-    "\u5409\u51f6\u53c2\u534a" = 60L,
-    "\u51f6\u591a\u5409\u5c11" = 45L,
-    "\u5927\u51f6"             = 30L
-)
-
 get_avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
     if (is.null(min_stroke)) {
         min_stroke <- 1L
@@ -60,12 +41,12 @@ get_avail_strokes <- function(min_stroke = NULL, max_stroke = NULL) {
 #'        there is no fixed stroke number for the first character. Default:
 #'        `NULL`.
 #'
-#' @param min_wuge,max_sancai A string indicating the minimum luck for WuGe and
+#' @param min_shuli,max_sancai A string indicating the minimum luck for WuGe and
 #'        SanCai. Default: `\u5409`.
 #'
 #' @noRd
 cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NULL,
-                        fixed_stroke = NULL, min_wuge = "\u5409", min_sancai = min_wuge) {
+                        fixed_stroke = NULL, min_shuli = "\u5409", min_sancai = min_shuli) {
     num_char <- assert_count(num_char, 1L)
     if (num_char >= 4L) {
         stop(sprintf("`num_char` should be less than 4L but input is '%s'.", num_char))
@@ -113,6 +94,12 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         ),
         idcol = "index"
     )
+
+    # NOTE: to make CRAN checks happy
+    tian <- ren <- di <- wai <- zong <- NULL
+    # remove wuge that exceeds the maximum number 81
+    wuge <- wuge[tian <= 81L & ren <= 81L & di <= 81L & wai <= 81L & zong <= 81L]
+
     data.table::set(wuge, NULL, "index", as.integer(wuge$index))
     data.table::set(wuge, NULL, "id", seq.int(nrow(wuge)))
     data.table::set(wuge, NULL,
@@ -129,28 +116,20 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
                 .subset(score, di),
                 .subset(score, wai),
                 .subset(score, zong),
-                .subset(jixiong, tian),
-                .subset(jixiong, ren),
-                .subset(jixiong, di),
-                .subset(jixiong, wai),
-                .subset(jixiong, zong)
+                # NOTE: cannot use .subset here
+                # .subset(factor, i) will coerce factors to integers
+                jixiong[tian], jixiong[ren], jixiong[di], jixiong[wai], jixiong[zong]
             )
         })
     )
 
-    assert_choice(min_wuge, names(SCORE_WUGE), null_ok = FALSE)
-    assert_choice(min_sancai, names(SCORE_SANCAI), null_ok = FALSE)
+    assert_choice(min_shuli, levels(dict_shuli()$jixiong), null_ok = FALSE)
+    assert_choice(min_sancai, levels(dict_shuli()$jixiong), null_ok = FALSE)
 
+    # NOTE: to make CRAN checks happy
+    jixiong_ren <- jixiong_di <- jixiong_wai <- jixiong_zong <- NULL
     # only select entries that exceeds the threshold
-    thld_wuge <- SCORE_WUGE[data.table::chmatch(min_wuge, names(SCORE_WUGE))]
-    wuge_sel <- wuge[
-        with(wuge,
-            score_ren  >= thld_wuge &
-            score_di   >= thld_wuge &
-            score_wai  >= thld_wuge &
-            score_zong >= thld_wuge
-        )
-    ]
+    wuge_sel <- wuge[jixiong_ren >= min_shuli & jixiong_di >= min_shuli & jixiong_wai >= min_shuli & jixiong_zong >= min_shuli]
 
     # get sancai in wuxing style
     data.table::set(wuge_sel, NULL, "sancai",
@@ -171,15 +150,18 @@ cal_strokes <- function(xing, num_char = 2L, min_stroke = NULL, max_stroke = NUL
         }
     )
 
-    thld_sancai <- SCORE_SANCAI[data.table::chmatch(min_sancai, names(SCORE_SANCAI))]
     # NOTE: to make CRAN checks happy
-    score_sancai <- NULL
-    wuge_sancai_sel <- wuge_sel[score_sancai >= thld_sancai]
+    jixiong_sancai <- NULL
+    wuge_sancai_sel <- wuge_sel[jixiong_sancai >= min_sancai]
 
+    # NOTE: to make CRAN checks happy
+    score_tian <- score_ren <- score_di <- score_wai <- score_zong <- NULL
     # calculate total score
     data.table::set(wuge_sancai_sel, NULL, "score_shuli",
         with(wuge_sancai_sel, get_wuge_score_shuli(score_tian, score_di, score_ren, score_wai, score_zong))
     )
+    # NOTE: to make CRAN checks happy
+    score_shuli <- score_sancai <- NULL
     data.table::set(wuge_sancai_sel, NULL, "score_total",
         with(wuge_sancai_sel, get_wuge_score_total(score_shuli, score_sancai))
     )
