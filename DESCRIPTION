@@ -12,7 +12,7 @@ Authors@R: c(
 Description:
     Provide utilities to construct Chinese names and evaluate them based on
     'WuGe' rules, an ancient naming method.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.2.3
 Imports:
