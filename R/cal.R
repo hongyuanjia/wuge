@@ -43,6 +43,8 @@ wuge_char_data <- function(char, to_trad = TRUE) {
 
         # if any characters are not matched, retry with simplified characters
         if (length(miss <- which(is.na(match$stroke)))) {
+            # NOTE: to make CRAN checks happy
+            J <- NULL
             data.table::set(
                 match, miss,
                 c("character", "stroke", "pinyin", "radical", "stroke_wuge"),
@@ -70,7 +72,7 @@ wuge_char_data <- function(char, to_trad = TRUE) {
 
 #' Get WuGe information of Chinese names
 #'
-#' `get_wuge()` gets the WuGe information of Chinese names.
+#' `wuge()` gets the WuGe information of Chinese names.
 #'
 #' @param xing A character vector of Chinese characters indicating the last
 #'        names.
@@ -83,6 +85,8 @@ wuge_char_data <- function(char, to_trad = TRUE) {
 #'        give correct results, you may want to set `to_trad` to FALSE and
 #'        directly specify Tradition Chinese characters as input. Default:
 #'        `TRUE`
+#'
+#' @return An `WuGe` object.
 #'
 #' @examples
 #' wuge(c("张", "李"), c("三", "四五"))
@@ -121,8 +125,8 @@ wuge <- function(xing, ming, to_trad = TRUE) {
             xing = dt_xing,
             ming = dt_ming,
             score = wuge_score(wuge),
-            sancai = wuge_sancai(wuge),
             shuli = wuge_shuli(wuge),
+            sancai = wuge_sancai(wuge),
             luck = wuge_luck(wuge)
         ),
         class = "WuGe"

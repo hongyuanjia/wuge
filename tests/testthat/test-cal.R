@@ -38,22 +38,25 @@ test_that("wuge calculation works", {
         wuge_score(wuge),
         data.table::data.table(
             index = 1L, tian = 14, ren = 16, di = 5, wai = 3, zong = 18, sancai = "火土土",
-            score_tian = 80, score_ren = 100, score_di = 100, score_wai = 100,
-            score_zong = 90, score_wuge = 97, score_sancai = 100, score_total = 97.8
+            score_tian = 45, score_ren = 98, score_di = 98, score_wai = 98,
+            score_zong = 90, score_shuli = 93.75, score_sancai = 98, score_total = 94.8
         )
     )
 
     expect_equal(
         names(wuge_shuli(wuge)),
         c("index", "wuge", "num", "wuxing", "score",
-            "brief", "desc", "jixiong", "foundation", "family", "health",
-            "future", "fortune", "desc_full"
+            "jixiong", "brief", "short", "indication", "foundation", "family", "health",
+            "future", "fortune", "description"
         )
     )
 
     expect_equal(
         names(wuge_sancai(wuge)),
-        c("index", "wuxing", "jixiong", "score", "description", "description_special")
+        c(
+            "index", "wuxing", "jixiong", "score", "brief", "description",
+            "detail", "description_special"
+        )
     )
 
     expect_equal(
@@ -61,11 +64,11 @@ test_that("wuge calculation works", {
         c("base", "success", "social", "health")
     )
 
-    expect_type(wuge <- wuge(c("王", "司马"), "一"), "list")
+    expect_s3_class(wuge <- wuge(c("王", "司马"), "一"), "WuGe")
 
     expect_equal(
         names(wuge),
-        c("xing", "ming", "score", "sancai", "shuli", "luck")
+        c("xing", "ming", "score", "shuli", "sancai", "luck")
     )
 
     expect_equal(
@@ -82,21 +85,22 @@ test_that("wuge calculation works", {
         names(wuge$score),
         c("index", "tian", "ren", "di", "wai", "zong", "sancai",
             "score_tian", "score_ren", "score_di", "score_wai", "score_zong",
-            "score_wuge", "score_sancai", "score_total"
+            "score_shuli", "score_sancai", "score_total"
+        )
+    )
+
+    expect_equal(
+        names(wuge$shuli),
+        c(
+            "index", "wuge", "num", "wuxing", "score", "jixiong",
+            "brief", "short", "indication", "foundation", "family", "health",
+            "future", "fortune", "description"
         )
     )
 
     expect_equal(
         names(wuge$sancai),
-        c("index", "wuxing", "jixiong", "score", "description", "description_special")
-    )
-
-    expect_equal(
-        names(wuge$shuli),
-        c("index", "wuge", "num", "wuxing", "score",
-            "brief", "desc", "jixiong", "foundation", "family", "health",
-            "future", "fortune", "desc_full"
-        )
+        c("index", "wuxing", "jixiong", "score", "brief", "description", "detail", "description_special")
     )
 
     expect_equal(

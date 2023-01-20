@@ -19,8 +19,11 @@ give correct results, you may want to set `to_trad` to FALSE and
 directly specify Tradition Chinese characters as input. Default:
 `TRUE`}
 }
+\value{
+An `WuGe` object.
+}
 \description{
-`get_wuge()` gets the WuGe information of Chinese names.
+`wuge()` gets the WuGe information of Chinese names.
 }
 \examples{
 wuge(c("张", "李"), c("三", "四五"))

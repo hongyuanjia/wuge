@@ -1,4 +1,4 @@
-test_that("get_char_data() works", {
+test_that("char_data() works", {
     expect_equal(
         names(char_data(c("十千", "万"))),
         c("index", "character", "stroke", "pinyin", "radical")

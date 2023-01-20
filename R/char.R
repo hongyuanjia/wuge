@@ -1,4 +1,4 @@
-char_data <- function(char) {
+char_data <- function(char, wuge = FALSE) {
     match <- dict_char()[split_char(char), on = "character"]
     data.table::setcolorder(match, "index")
     data.table::setindexv(match, "character")

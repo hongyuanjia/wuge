@@ -11,12 +11,15 @@ Authors@R: c(
     )
 Description:
     Provide utilities to construct Chinese names and evaluate them based on
-    'WuGe' rules.
+    'WuGe' rules, an ancient naming method.
 License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.2.3
 Imports:
-    data.table
+    cli,
+    data.table,
+    ggplot2,
+    openxlsx
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
