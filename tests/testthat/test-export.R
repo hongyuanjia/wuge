@@ -1,4 +1,6 @@
 test_that("Can export WuGe", {
+    skip_on_cran()
+
     expect_error(export("a"))
 
     f <- tempfile(fileext = ".png")

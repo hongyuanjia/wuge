@@ -1,4 +1,5 @@
 test_that("Can format WuGe", {
+    skip_on_cran()
     expect_snapshot(print(wuge("张", "三")))
     expect_snapshot(print(name("张", max = 10)))
 
