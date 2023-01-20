@@ -32,7 +32,7 @@ given names should has a stroke number of `10`, while there is no
 fixed stroke number for the first character. Default: `NULL`.}
 
 \item{shuli, sancai}{A string indicating the minimum luck for WuGe and
-SanCai. Default: `"\u5409"`.}
+SanCai. Default: \code{"\u5409"}.}
 
 \item{common}{If `TRUE`, only around 3500 common Chinese characters will be
 used. Default: `TRUE`}

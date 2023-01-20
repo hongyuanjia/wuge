@@ -88,22 +88,23 @@ export.WuGeName <- function(x, file, width = 10.5, height = 27, dpi = 300, ..., 
         sgl <- subset_wuge(x, ind$index, ind$id)
 
         sheet <- sprintf("%s%s",
-            sgl$xing$character, paste0(sprintf("【%s】", sgl$ming$stroke_wuge), collapse = "")
+            sgl$xing$character, paste0(sprintf("\u3010%s\u3011", sgl$ming$stroke_wuge), collapse = "")
         )
 
         if (verbose) cli::cli_progress_output(paste0("Working on '", sheet, "'", collapse = "\n"))
         if (nrow(sgl$ming) == 1L) {
             chars <- data.table::data.table(
-                "姓" = paste0(sgl$xing$character, collapse = ""),
-                "名" = sgl$ming$character[[1L]]
+                paste0(sgl$xing$character, collapse = ""),
+                sgl$ming$character[[1L]]
             )
+            data.table::setnames(chars, c("\u59d3", "\u540d"))
         } else {
             chars <- do.call(data.table::CJ, sgl$ming$character)
-            data.table::setnames(chars, sprintf("第%i字", seq_len(nrow(sgl$ming))))
-            data.table::set(chars, NULL, "姓", paste0(sgl$xing$character, collapse = ""))
-            data.table::setcolorder(chars, "姓")
+            data.table::setnames(chars, sprintf("\u7b2c%i\u5b57", seq_len(nrow(sgl$ming))))
+            data.table::set(chars, NULL, "\u59d3", paste0(sgl$xing$character, collapse = ""))
+            data.table::setcolorder(chars, "\u59d3")
         }
-        data.table::set(chars, NULL, "姓名", do.call(paste0, chars))
+        data.table::set(chars, NULL, "\u59d3\u540d", do.call(paste0, chars))
 
         openxlsx::addWorksheet(wb, sheet)
         openxlsx::activeSheet(wb) <- sheet

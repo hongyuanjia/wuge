@@ -27,7 +27,7 @@ NULL
 .GLOBAL$luck_health <- NULL
 .GLOBAL$char_common <- NULL
 
-FULL_JIXIONG <- c("大凶", "凶", "平", "半吉", "吉", "大吉")
+FULL_JIXIONG <- c("\u5927\u51f6", "\u51f6", "\u5e73", "\u534a\u5409", "\u5409", "\u5927\u5409")
 
 dict_conv <- function(force = FALSE) {
     if (is.null(.GLOBAL$conv)) force <- TRUE

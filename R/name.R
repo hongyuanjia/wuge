@@ -48,7 +48,7 @@ avail_strokes <- function(min = NULL, max = NULL, common = FALSE) {
 #'        fixed stroke number for the first character. Default: `NULL`.
 #'
 #' @param shuli,sancai A string indicating the minimum luck for WuGe and
-#'        SanCai. Default: `"\u5409"`.
+#'        SanCai. Default: \code{"\u5409"}.
 #'
 #' @param common If `TRUE`, only around 3500 common Chinese characters will be
 #'        used. Default: `TRUE`

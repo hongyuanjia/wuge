@@ -5,7 +5,7 @@ get_wuge_name <- function(x) {
     if (!"id" %in% names(x$ming)) {
         paste0(paste0(x$xing$character, collapse = ""), paste0(x$ming$character, collapse = ""))
     } else {
-        paste0(paste0(x$xing$character, collapse = ""), paste0("【", x$ming$stroke_wuge, "】", collapse = ""))
+        paste0(paste0(x$xing$character, collapse = ""), paste0("\u3010", x$ming$stroke_wuge, "\u3011", collapse = ""))
     }
 }
 
@@ -22,9 +22,10 @@ print_wuge_name <- function(x, name = NULL) {
     fmt <- vapply(data.table::transpose(fmt), paste0, "", collapse = " ")
     names(fmt) <- names(char)
 
-    cli::cli_rule("姓名", right = name)
+    cli::cli_rule("\u59d3\u540d", right = name)
 
-    map <- c("姓名" = "character", "繁体" = "traditional", "拼音" = "pinyin", "笔画" = "stroke_wuge")
+    map <- c("character", "traditional", "pinyin", "stroke_wuge")
+    names(map) <- c("\u59d3\u540d", "\u7e41\u4f53", "\u62fc\u97f3", "\u7b14\u753b")
     bul <- sprintf("%s：%s", names(map), spacing(fmt[map]))
     names(bul) <- rep("*", length(map))
     cli::cli_bullets(bul)
@@ -33,19 +34,20 @@ print_wuge_name <- function(x, name = NULL) {
 }
 
 print_wuge_num <- function(x, name = NULL, box = TRUE) {
-    ind <- c("天格" = 1L, "人格" = 2L, "地格" = 3L, "外格" = 4L, "总格" = 5L)
+    ind <- 1:5
+    names(ind) <- c("\u5929\u683c", "\u4eba\u683c", "\u5730\u683c", "\u5916\u683c", "\u603b\u683c")
 
     wuge <- x$shuli[, lapply(.SD, as.character), .SDcols = c("num", "wuxing", "jixiong")]
     fmt <- data.table::transpose(lapply(wuge, format.default, justify = "right"))
     names(fmt) <- names(ind)
     fmt <- vapply(fmt, paste0, "", collapse = " -> ")
 
-    cli::cli_rule("五格数理排盘", right = name)
+    cli::cli_rule("\u4e94\u683c\u6570\u7406\u6392\u76d8", right = name)
 
     if (box) {
-        cli::cat_boxx(spacing(sprintf(" %s 分 ", x$score$score_shuli)), padding = 0)
+        cli::cat_boxx(spacing(sprintf(" %s \u5206 ", x$score$score_shuli)), padding = 0)
     } else {
-        cli::cli_text(spacing(sprintf(" 【%s 分】", x$score$score_shuli)))
+        cli::cli_text(spacing(sprintf(" \u3010%s \u5206\u3011", x$score$score_shuli)))
     }
 
     bul <- sprintf("%s：%s", names(ind), spacing(fmt[ind]))
@@ -56,26 +58,27 @@ print_wuge_num <- function(x, name = NULL, box = TRUE) {
 }
 
 print_wuge_shuli <- function(x, name = NULL, box = TRUE) {
-    ind <- c("天格" = 1L, "人格" = 2L, "地格" = 3L, "外格" = 4L, "总格" = 5L)
+    ind <- 1:5
+    names(ind) <- c("\u5929\u683c", "\u4eba\u683c", "\u5730\u683c", "\u5916\u683c", "\u603b\u683c")
 
     for (i in seq_along(ind)) {
         cli::cli_rule(
-            "{names(ind)[i]} {.val {x$shuli$num[i]}} 的分析",
+            "{names(ind)[i]} {.val {x$shuli$num[i]}} \u7684\u5206\u6790",
             right = name
         )
 
         if (box) {
-            cli::cat_boxx(spacing(sprintf(" %s 分 ", x$shuli$score[i])), padding = 0)
+            cli::cat_boxx(spacing(sprintf(" %s \u5206 ", x$shuli$score[i])), padding = 0)
         } else {
-            cli::cli_text(spacing(sprintf(" 【%s 分】", x$shuli$score[i])))
+            cli::cli_text(spacing(sprintf(" \u3010%s \u5206\u3011", x$shuli$score[i])))
         }
 
         cli::cli_bullets(c(
-            "*" = "关键词：{x$shuli$brief[i]}",
-            "*" = "简述：{x$shuli$short[i]}"
+            "*" = "\u5173\u952e\u8bcd\uff1a{x$shuli$brief[i]}",
+            "*" = "\u7b80\u8ff0\uff1a{x$shuli$short[i]}"
         ))
 
-        cli::cli_bullets(c("*" = "数理暗示："))
+        cli::cli_bullets(c("*" = "\u6570\u7406\u6697\u793a\uff1a"))
         div <- cli::cli_div(theme = list(".bullets .bullet-*" = list("padding-left" = 2)))
         items <- strsplit(x$shuli$indication[i], "\n", fixed = TRUE)[[1L]]
         names(items) <- rep("*", length(items))
@@ -83,14 +86,14 @@ print_wuge_shuli <- function(x, name = NULL, box = TRUE) {
         cli::cli_end(div)
 
         cli::cli_bullets(c(
-            "*" = "基础运：{x$shuli$foundation[i]}",
-            "*" = "家庭运：{x$shuli$family[i]}",
-            "*" = "健康运：{x$shuli$health[i]}",
-            "*" = "事业运：{x$shuli$future[i]}",
-            "*" = "财富运：{x$shuli$fortune[i]}"
+            "*" = "\u57fa\u7840\u8fd0\uff1a{x$shuli$foundation[i]}",
+            "*" = "\u5bb6\u5ead\u8fd0\uff1a{x$shuli$family[i]}",
+            "*" = "\u5065\u5eb7\u8fd0\uff1a{x$shuli$health[i]}",
+            "*" = "\u4e8b\u4e1a\u8fd0\uff1a{x$shuli$future[i]}",
+            "*" = "\u8d22\u5bcc\u8fd0\uff1a{x$shuli$fortune[i]}"
         ))
 
-        cli::cli_bullets(c("*" = "详细解释："))
+        cli::cli_bullets(c("*" = "\u8be6\u7ec6\u89e3\u91ca\uff1a"))
         div <- cli::cli_div(theme = list(".bullets .bullet-space" = list("padding-left" = 0)))
         items <- strsplit(x$shuli$description[i], "\n", fixed = TRUE)[[1L]]
         names(items) <- rep(" ", length(items))
@@ -104,71 +107,74 @@ print_wuge_shuli <- function(x, name = NULL, box = TRUE) {
 }
 
 print_wuge_sancai <- function(x, name = NULL, box = TRUE) {
-    cli::cli_rule("三才剖析", right = name)
+    cli::cli_rule("\u4e09\u624d\u5256\u6790", right = name)
 
     if (box) {
         cli::cat_boxx(
-            spacing(sprintf(" 吉凶：<%s>；得分：%s ", x$sancai$jixiong, x$sancai$score)),
+            spacing(sprintf(" \u5409\u51f6\uff1a<%s>\uff1b\u5f97\u5206\uff1a%s ", x$sancai$jixiong, x$sancai$score)),
             x$sancai$wuxing,
             padding = 0
         )
     } else {
-        cli::cli_text(spacing(sprintf(" 【五行：<%s>；吉凶：<%s>；得分：%s】",
+        cli::cli_text(spacing(sprintf(" \u3010\u4e94\u884c\uff1a<%s>\uff1b\u5409\u51f6\uff1a<%s>\uff1b\u5f97\u5206\uff1a%s\u3011",
             x$sancai$wuxing, x$sancai$jixiong, x$sancai$score
         )))
     }
 
-    cli::cli_rule("简述", right = name)
+    cli::cli_rule("\u7b80\u8ff0", right = name)
     div <- cli::cli_div(theme = list(".bullets .bullet-space" = list("padding-left" = 2)))
     cli::cli_bullets(c(" " = x$sancai$brief, " " = x$sancai$description))
     cli::cli_end(div)
 
     cli::cat_line()
 
-    cli::cli_rule("详细解释", right = name)
-    items <- gsub("^\\d+、", "", strsplit(x$sancai$detail, "\n", fixed = TRUE)[[1L]])
+    cli::cli_rule("\u8be6\u7ec6\u89e3\u91ca", right = name)
+    items <- gsub("^\\d+\u3001", "", strsplit(x$sancai$detail, "\n", fixed = TRUE)[[1L]])
     names(items) <- rep("*", length(items))
     cli::cli_bullets(items)
     if (!is.na(x$sancai$description_special)) {
-        cli::cli_bullets(c("*" = "【注意健康！】：{x$sancai$description_special}"))
+        cli::cli_bullets(c("*" = "\u3010\u6ce8\u610f\u5065\u5eb7\uff01\u3011\uff1a{x$sancai$description_special}"))
     }
 
     invisible(x)
 }
 
 print_wuge_luck <- function(x, name = NULL, box = TRUE) {
-    comp <- c("基础运" = "base", "成功运" = "success", "社交运" = "social")
-    map <- c("天格" = "tian", "人格" = "ren", "地格" = "di", "外格" = "wai", "总格" = "zong")
+    comp <- c("base", "success", "social")
+    names(comp) <- c("\u57fa\u7840\u8fd0", "\u6210\u529f\u8fd0", "\u793e\u4ea4\u8fd0")
+
+    map <- c("tian", "ren", "di", "wai", "zong")
+    names(map) <- c("\u5929\u683c", "\u4eba\u683c", "\u5730\u683c", "\u5916\u683c",  "\u603b\u683c")
 
     for (i in seq_along(comp)) {
         cli::cli_rule(names(comp[i]), right = name)
 
         dt <- x$luck[[comp[[i]]]]
         if (box) {
-            cli::cat_boxx(spacing(sprintf(" 吉凶：<%s> ", dt$jixiong)), padding = 0)
+            cli::cat_boxx(spacing(sprintf(" \u5409\u51f6\uff1a<%s> ", dt$jixiong)), padding = 0)
         } else {
-            cli::cli_text(spacing(sprintf(" 【吉凶：<%s>】", dt$jixiong)))
+            cli::cli_text(spacing(sprintf(" \u3010\u5409\u51f6\uff1a<%s>\u3011", dt$jixiong)))
         }
 
         m <- map[map %in% names(dt)]
-        s <- paste0(sprintf("%s【%s】", names(m), c(dt[[m[1L]]], dt[[m[2L]]])), collapse = "")
+        s <- paste0(sprintf("%s\u3010%s\u3011", names(m), c(dt[[m[1L]]], dt[[m[2L]]])), collapse = "")
 
-        cli::cli_bullets(c("*" = "五格：{s}"))
-        cli::cli_bullets(c("*" = "描述：{dt$description}"))
+        cli::cli_bullets(c("*" = "\u4e94\u683c\uff1a{s}"))
+        cli::cli_bullets(c("*" = "\u63cf\u8ff0\uff1a{dt$description}"))
         if (i < length(comp)) cli::cat_line()
     }
 
     if (!is.na(x$luck$health$description)) {
-        cli::cli_rule("健康运", right = name)
+        cli::cli_rule("\u5065\u5eb7\u8fd0", right = name)
 
         if (box) {
-            cli::cat_boxx(spacing(sprintf(" 吉凶：<凶> ")), padding = 0)
+            cli::cat_boxx(spacing(sprintf(" \u5409\u51f6\uff1a<\u51f6> ")), padding = 0)
         } else {
-            cli::cli_text(spacing(sprintf(" 【吉凶：<凶>】")))
+            cli::cli_text(spacing(sprintf(" \u3010\u5409\u51f6\uff1a<\u51f6>\u3011")))
         }
 
-        cli::cli_bullets(c("*" = "五格：天格【{x$luck$health$tian}】人格【{x$luck$health$di}】"))
-        cli::cli_bullets(c("*" = "描述：{x$luck$health$description}"))
+        cli::cli_bullets(c("*" = "\u4e94\u683c\uff1a\u5929\u683c\u3010{x$luck$health$tian}\u3011\u4eba\u683c\u3010{x$luck$health$di}\u3011"))
+        cli::cli_bullets(c("*" = "\u63cf\u8ff0\uff1a{x$luck$health$description}"))
     }
 
     invisible(x)
@@ -178,8 +184,8 @@ print_wuge_single <- function(x, box = TRUE) {
     name <- get_wuge_name(x)
     div <- cli::cli_div(theme = list(rule = list("line-type" = "double")))
     if ("id" %in% names(x$score) && (!length(x$score$id) || is.na(x$score$id))) {
-        cli::cli_rule("姓名", right = "{paste0(x$xing$character, collapse = '')} *")
-        cli::cli_text(" {spacing(' ')} <{.emph 无满足要求的笔画组合。}>")
+        cli::cli_rule("\u59d3\u540d", right = "{paste0(x$xing$character, collapse = \'\')} *")
+        cli::cli_text(" {spacing(\' \')} <{.emph \u65e0\u6ee1\u8db3\u8981\u6c42\u7684\u7b14\u753b\u7ec4\u5408\u3002}>")
         return(invisible(x))
     }
 
