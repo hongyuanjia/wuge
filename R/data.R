@@ -1,7 +1,5 @@
-#' @keywords internal
-"_PACKAGE"
-
 ## usethis namespace: start
+#' @importFrom cli cli_rule
 #' @importFrom data.table .BY
 #' @importFrom data.table .EACHI
 #' @importFrom data.table .GRP
@@ -11,6 +9,8 @@
 #' @importFrom data.table .SD
 #' @importFrom data.table :=
 #' @importFrom data.table data.table
+#' @importFrom ggplot2 ggplot
+#' @importFrom openxlsx createWorkbook
 ## usethis namespace: end
 NULL
 
@@ -25,6 +25,7 @@ NULL
 .GLOBAL$luck_success <- NULL
 .GLOBAL$luck_social <- NULL
 .GLOBAL$luck_health <- NULL
+.GLOBAL$char_common <- NULL
 
 FULL_JIXIONG <- c("大凶", "凶", "平", "半吉", "吉", "大吉")
 
@@ -52,6 +53,19 @@ dict_char <- function(force = FALSE) {
     }
 
     .GLOBAL$char
+}
+
+dict_char_common <- function(force = FALSE) {
+    if (is.null(.GLOBAL$char_common)) force <- TRUE
+
+    if (force) {
+        path <- system.file("extdata/char_common.csv", package = "wuge")
+        char <- data.table::fread(path, encoding = "UTF-8")
+        data.table::setindexv(char, "character")
+        .GLOBAL$char_common <- char
+    }
+
+    .GLOBAL$char_common
 }
 
 dict_kangxi <- function(force = FALSE) {
