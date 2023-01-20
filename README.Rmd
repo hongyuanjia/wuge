@@ -11,8 +11,6 @@ knitr::opts_chunk$set(
     fig.path = "man/figures/README-",
     out.width = "100%"
 )
-
-options("cli.width" = 60)
 ```
 
 ## wuge 五格
@@ -53,7 +51,7 @@ wuge::wuge("张", "三")
 ```
 
 ```{r, echo = FALSE}
-cli::cat_line(format(wuge::wuge("张", "三"))[1:20])
+cli::cat_line(format(wuge::wuge("张", "三"), width = 60)[1:20])
 cli::cat_line("......")
 ```
 
@@ -90,7 +88,7 @@ wuge::name("张", max = 10, shuli = "吉", sancai = "吉")
 ```
 
 ```{r, echo = FALSE}
-cli::cat_line(format(wuge::name("张", max = 10, shuli = "吉", sancai = "吉"))[1:20])
+cli::cat_line(format(wuge::name("张", max = 10, shuli = "吉", sancai = "吉"), width = 60)[1:20])
 cli::cat_line("......")
 ```
 
