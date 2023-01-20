@@ -1,7 +1,5 @@
 ---
-title: wuge
-output:
-  github_document:
+output: github_document
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -17,10 +15,11 @@ knitr::opts_chunk$set(
 options("cli.width" = 60)
 ```
 
-# wuge 五格
+## wuge 五格
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/wuge)](https://CRAN.R-project.org/package=wuge)
+[![R-CMD-check](https://github.com/hongyuanjia/wuge/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hongyuanjia/wuge/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 给宝宝取名字可能是最让父母头大的一件事情。家中老一辈有的讲究根据
@@ -34,7 +33,7 @@ options("cli.width" = 60)
 
 这个包还没有上传到 CRAN 上，目前可以使用如下方式安装：
 
-``` r
+```r
 remotes::install_github("hongyuanjia/wuge")
 ```
 

@@ -1,11 +1,13 @@
-wuge
-================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# wuge 五格
+## wuge 五格
 
 <!-- badges: start -->
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/wuge)](https://CRAN.R-project.org/package=wuge)
+[![R-CMD-check](https://github.com/hongyuanjia/wuge/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hongyuanjia/wuge/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 给宝宝取名字可能是最让父母头大的一件事情。家中老一辈有的讲究根据
