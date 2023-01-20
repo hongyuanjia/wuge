@@ -26,7 +26,7 @@
 #' @param verbose If `TRUE`, a progress bar will be shown for long-time export
 #'        process. Default: `TRUE`.
 #'
-#' @return The full path of the file generated.
+#' @return The full path of the file generated, invisibly.
 #'
 #' @examples
 #' \dontrun{
@@ -66,7 +66,7 @@ export.WuGe <- function(x, file, width = 10.5, height = 27, dpi = 300, ..., fmt_
         )
 
     ggplot2::ggsave(file, p, width = width, height = height, dpi = dpi, ...)
-    normalizePath(file)
+    invisible(normalizePath(file))
 }
 
 #' @export
@@ -125,5 +125,5 @@ export.WuGeName <- function(x, file, width = 10.5, height = 27, dpi = 300, ..., 
     openxlsx::activeSheet(wb) <- 1L
     openxlsx::saveWorkbook(wb, file = file, overwrite = TRUE)
     if (verbose) cli::cli_alert_success("Exporting process complete!")
-    normalizePath(file)
+    invisible(normalizePath(file))
 }

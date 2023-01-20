@@ -38,7 +38,7 @@ It is used to set the option of `cli.width`. Default: `100`.}
 process. Default: `TRUE`.}
 }
 \value{
-The full path of the file generated.
+The full path of the file generated, invisibly.
 }
 \description{
 `export()` will write all information of WuGe into an image. This makes it
