@@ -26,7 +26,7 @@ print_wuge_name <- function(x, name = NULL) {
 
     map <- c("character", "traditional", "pinyin", "stroke_wuge")
     names(map) <- c("\u59d3\u540d", "\u7e41\u4f53", "\u62fc\u97f3", "\u7b14\u753b")
-    bul <- sprintf("%s：%s", names(map), spacing(fmt[map]))
+    bul <- sprintf("%s\uff1a%s", names(map), spacing(fmt[map]))
     names(bul) <- rep("*", length(map))
     cli::cli_bullets(bul)
 
@@ -50,7 +50,7 @@ print_wuge_num <- function(x, name = NULL, box = TRUE) {
         cli::cli_text(spacing(sprintf(" \u3010%s \u5206\u3011", x$score$score_shuli)))
     }
 
-    bul <- sprintf("%s：%s", names(ind), spacing(fmt[ind]))
+    bul <- sprintf("%s\uff1a%s", names(ind), spacing(fmt[ind]))
     names(bul) <- rep("*", length(ind))
     cli::cli_bullets(bul)
 
