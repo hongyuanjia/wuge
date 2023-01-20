@@ -208,7 +208,10 @@ format_wuge_single <- function(x, width = NULL, strip = TRUE) {
     on.exit(options(op), add = TRUE)
     fmt <- cli::cli_format_method(print_wuge_single(x, box = FALSE))
     if (strip) fmt <- cli::ansi_strip(fmt)
-    if (!is.null(width)) fmt <- strtrunk(fmt, width)
+    if (!is.null(width)) {
+        assert_count(width, 1L)
+        fmt <- strtrunk(fmt, width)
+    }
     fmt
 }
 
