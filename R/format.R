@@ -238,11 +238,9 @@ strtrunk <- function(x, width = cli::console_width()) {
 
     while (length(ind)) {
         line <- if (!first) {
-            paste0(
-                pre[ind],
-                cli::ansi_strtrim(txt[ind], width - cli::ansi_nchar(pre[ind]), ""),
-                "\n"
-            )
+            vapply(ind, FUN.VALUE = "", function(i) {
+                paste0(pre[i], cli::ansi_strtrim(txt[i], width - cli::ansi_nchar(pre[i]), ""), "\n")
+            })
         } else {
             paste0(cli::ansi_strtrim(txt[ind], width, ""), "\n")
         }
